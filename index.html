@@ -2,120 +2,260 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>SGX - LAI PR PoC + Info</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SGX - LAI Core (Bolines Engine)</title>
     <style>
-        body { margin: 0; overflow: hidden; background: #111; font-family: monospace; user-select: none; }
-        #ui { position: absolute; top: 20px; left: 20px; color: #FDCC0D; z-index: 10; background: rgba(50, 82, 123, 0.9); padding: 15px; border: 2px solid #FDCC0D; border-radius: 8px; width: 250px;}
-        h2 { margin: 0 0 10px 0; font-size: 16px; text-transform: uppercase; letter-spacing: 2px; }
-        button { background: #FDCC0D; color: #111; border: none; padding: 10px; margin: 5px 0; cursor: pointer; font-weight: bold; width: 100%; text-transform: uppercase; transition: 0.2s; }
-        button:hover { background: #fff; transform: scale(1.02); }
+        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+        * { box-sizing: border-box; }
+        body { margin: 0; overflow: hidden; background-color: #050508; font-family: 'Share Tech Mono', monospace; color: #FDCC0D; user-select: none; }
         
-        /* Botón de Info Dinámico */
-        #btn-info { background: #00ffcc; color: #111; display: none; margin-top: 15px; }
-
-        /* Panel de Información (Modal) */
-        #info-panel { 
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: 320px; background: #32527B; color: #fff; border: 3px solid #FDCC0D;
-            padding: 20px; display: none; z-index: 100; box-shadow: 0 0 30px rgba(0,0,0,0.8);
+        #ui { position: absolute; top: 15px; left: 15px; z-index: 10; display: flex; gap: 10px; }
+        
+        button { 
+            background: rgba(50, 82, 123, 0.6); color: #FDCC0D; border: none; 
+            border-left: 3px solid #FDCC0D; border-right: 3px solid #FDCC0D;
+            padding: 10px 20px; font-family: 'Share Tech Mono', monospace; font-size: 14px; 
+            cursor: pointer; text-transform: uppercase; font-weight: bold;
+            clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+            backdrop-filter: blur(4px); transition: 0.2s;
         }
-        #info-panel h3 { color: #FDCC0D; margin-top: 0; text-transform: uppercase; }
-        #info-panel p { line-height: 1.4; font-size: 14px; }
-        #close-info { background: #ff4444; color: white; margin-top: 10px; }
+        button:hover, button.active { background: rgba(0, 255, 255, 0.2); color: #fff; border-color: #00FFFF; }
 
-        #hud { position: absolute; bottom: 30px; width: 100%; text-align: center; color: #fff; pointer-events: none; font-size: 18px; text-shadow: 2px 2px 0px #000; }
-        #score { font-size: 20px; font-weight: bold; color: #00ffcc; margin-top: 10px; border-top: 1px solid #FDCC0D; padding-top: 10px; }
+        #hud { position: absolute; bottom: 20px; width: 100%; text-align: center; color: #00FFFF; font-size: 18px; text-shadow: 0 0 10px #00FFFF; pointer-events: none; }
+        
+        .glitch-title { position: absolute; top: 15px; right: 15px; font-size: 24px; color: #fff; text-shadow: 2px 0 #00FFFF, -2px 0 #FF0055; z-index: 10;}
     </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 </head>
 <body>
 
+    <div class="glitch-title">LAI_ENGINE.exe</div>
+    
     <div id="ui">
-        <h2>LAI PR - SISTEMA</h2>
-        <button onclick="setMode('RUN')">1. 100m Dash</button>
-        <button onclick="setMode('BASKET')">2. Baloncesto</button>
-        <button onclick="setMode('SOCCER')">3. Fútbol</button>
-        <div id="score">PUNTOS: 0</div>
-        <button id="btn-info" onclick="toggleInfo(true)">[ ! ] INFO VENUE</button>
+        <button id="btn-run" onclick="setMode('RUN')">1. VALLAS (RUN)</button>
+        <button id="btn-basket" onclick="setMode('BASKET')">2. BASKET</button>
+        <button id="btn-soccer" onclick="setMode('SOCCER')">3. SOCCER</button>
     </div>
 
-    <div id="info-panel">
-        <h3 id="info-title">Título</h3>
-        <p id="info-text">Contenido de la información...</p>
-        <button id="close-info" onclick="toggleInfo(false)">CERRAR</button>
-    </div>
+    <div id="hud">SELECCIONA DISCIPLINA</div>
 
-    <div id="hud">Selecciona una disciplina</div>
+<script>
+    // 1. SETUP DEL MOTOR SGX
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(0x050508, 0.005);
+    
+    const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setClearColor(0x050508);
+    document.body.appendChild(renderer.domElement);
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script>
-        // DATA DE VENUES (Tu capa estratégica)
-        const venueData = {
-            'RUN': {
-                title: "Estadio Centroamericano",
-                text: "Ubicado en Mayagüez. La pista sintética es de grado olímpico. Aquí se rompió el récord de las Justas en 2010. Clave: Mantén el ritmo de la batucada."
-            },
-            'BASKET': {
-                title: "Auditorio Juan 'Pachín' Vicéns",
-                text: "La casa de los Leones en Ponce. Un venue legendario para las finales de la LAI. La presión del público afecta el pulso del tirador."
-            },
-            'SOCCER': {
-                title: "Campo de Fútbol - Colegio",
-                text: "El RUM (Mayagüez) suele ser host de las eliminatorias. El viento que baja de las montañas de la Sultana del Oeste afecta la trayectoria del balón."
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controls.maxPolarAngle = Math.PI / 2 - 0.05; // No ver debajo del piso
+
+    // Luces
+    scene.add(new THREE.AmbientLight(0xffffff, 0.4));
+    const spotLight = new THREE.SpotLight(0xFDCC0D, 1);
+    spotLight.position.set(20, 50, 20);
+    scene.add(spotLight);
+
+    // Piso Tron-Style
+    const grid = new THREE.GridHelper(200, 50, 0x32527B, 0x111111);
+    scene.add(grid);
+
+    // 2. OBJETOS (Primitives)
+    const ball = new THREE.Mesh(new THREE.SphereGeometry(1.5, 32, 32), new THREE.MeshStandardMaterial({ color: 0xff5500 }));
+    scene.add(ball);
+
+    const hoop = new THREE.Mesh(new THREE.TorusGeometry(2, 0.2, 16, 32), new THREE.MeshStandardMaterial({ color: 0x00FFFF }));
+    hoop.rotation.x = Math.PI / 2;
+    hoop.position.set(0, 15, -30);
+    scene.add(hoop);
+
+    const hurdle = new THREE.Mesh(new THREE.BoxGeometry(10, 3, 0.5), new THREE.MeshStandardMaterial({ color: 0xFF0055 }));
+    hurdle.position.set(0, 1.5, -40);
+    scene.add(hurdle);
+
+    // 3. SISTEMA FÍSICO Y DE ESTADO
+    let mode = 'NONE';
+    let isMoving = false;
+    let velocity = new THREE.Vector3();
+    const gravity = -40; // Gravedad ajustada para el "peso" en 3D
+    let score = 0;
+
+    // 4. EL MOTOR DE SLINGSHOT (Raycaster + Drag)
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+    const planeXZ = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+    let dragStart = new THREE.Vector3();
+    let isDragging = false;
+
+    // Línea visual para el SlingShot (Vector de tensión)
+    const lineMat = new THREE.LineBasicMaterial({ color: 0x00FFFF, linewidth: 2 });
+    const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]), lineMat);
+    scene.add(line);
+    line.visible = false;
+
+    function setMode(newMode) {
+        mode = newMode;
+        isMoving = false;
+        velocity.set(0,0,0);
+        
+        document.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+        document.getElementById('btn-' + mode.toLowerCase()).classList.add('active');
+
+        ball.position.set(0, 1.5, 0);
+        
+        if(mode === 'BASKET') {
+            camera.position.set(0, 10, 25);
+            controls.target.set(0, 5, -15);
+            hoop.visible = true; hurdle.visible = false;
+            ball.material.color.setHex(0xff5500);
+            document.getElementById('hud').innerText = "DRAG: Rota cámara. CLICK EN BOLA + DRAG: Tira al aro.";
+        } 
+        else if(mode === 'SOCCER') {
+            camera.position.set(0, 5, 20);
+            controls.target.set(0, 0, -20);
+            hoop.visible = false; hurdle.visible = false;
+            ball.material.color.setHex(0xffffff);
+            document.getElementById('hud').innerText = "Tiro libre. Calcula la fuerza y el ángulo del piso.";
+        }
+        else if(mode === 'RUN') {
+            camera.position.set(0, 8, 15);
+            controls.target.set(0, 2, -10);
+            hoop.visible = false; hurdle.visible = true;
+            ball.material.color.setHex(0x32527B); // Avatar
+            document.getElementById('hud').innerText = "SWIPE UP en la pantalla para saltar la valla";
+            isMoving = true;
+            velocity.set(0, 0, -15); // Auto-run constante hacia Z negativo
+        }
+    }
+
+    // INTERACCIÓN
+    renderer.domElement.addEventListener('pointerdown', (e) => {
+        if(mode === 'NONE') return;
+
+        mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+        raycaster.setFromCamera(mouse, camera);
+
+        // Si tocamos la bola (Slingshot para Basket/Soccer)
+        if(mode !== 'RUN') {
+            let hitbox = new THREE.Sphere(ball.position, 3);
+            if (raycaster.ray.intersectsSphere(hitbox) && !isMoving) {
+                isDragging = true;
+                controls.enabled = false; // Bloquear rotación de cámara mientras tiras
+                raycaster.ray.intersectPlane(planeXZ, dragStart);
+                line.visible = true;
             }
-        };
+        } else {
+            // Para "Run", cualquier touch registra el inicio del swipe
+            if(ball.position.y <= 1.5) { // Solo si está tocando el piso
+                isDragging = true;
+                dragStart.set(e.clientX, e.clientY, 0); // Pantalla 2D para el swipe
+            }
+        }
+    });
 
-        // SETUP BÁSICO
-        const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x1a1a2e);
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        document.body.appendChild(renderer.domElement);
-
-        const ball = new THREE.Mesh(new THREE.SphereGeometry(0.4), new THREE.MeshStandardMaterial({ color: 0xffffff }));
-        scene.add(ball);
-        const light = new THREE.PointLight(0xffffff, 1, 100);
-        light.position.set(10, 10, 10);
-        scene.add(light);
-        scene.add(new THREE.AmbientLight(0x404040));
-
-        let mode = 'NONE';
-        let score = 0;
-
-        function setMode(newMode) {
-            mode = newMode;
-            ball.position.set(0, 0.4, -2);
-            document.getElementById('hud').innerText = `MODO: ${mode}`;
+    renderer.domElement.addEventListener('pointermove', (e) => {
+        if (isDragging && mode !== 'RUN') {
+            mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+            raycaster.setFromCamera(mouse, camera);
             
-            // Mostrar botón de info
-            document.getElementById('btn-info').style.display = 'block';
+            let currentPoint = new THREE.Vector3();
+            raycaster.ray.intersectPlane(planeXZ, currentPoint);
             
-            // Update modal content ahead of time
-            document.getElementById('info-title').innerText = venueData[mode].title;
-            document.getElementById('info-text').innerText = venueData[mode].text;
+            // Dibujar la liga del slingshot invertida
+            let forceVec = new THREE.Vector3().subVectors(dragStart, currentPoint);
+            let endLine = new THREE.Vector3().addVectors(ball.position, forceVec);
+            line.geometry.setFromPoints([ball.position, endLine]);
+        }
+    });
 
-            // Reset camera for mode
-            if(mode === 'RUN') camera.position.set(0, 2, 5);
-            else camera.position.set(0, 1.5, 2);
-            camera.lookAt(0,0,0);
+    renderer.domElement.addEventListener('pointerup', (e) => {
+        if (!isDragging) return;
+        isDragging = false;
+        controls.enabled = true;
+        line.visible = false;
+
+        if (mode !== 'RUN') {
+            mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+            raycaster.setFromCamera(mouse, camera);
+            
+            let dropPoint = new THREE.Vector3();
+            raycaster.ray.intersectPlane(planeXZ, dropPoint);
+            
+            // Vector de fuerza (Invertido como un slingshot)
+            let force = new THREE.Vector3().subVectors(dragStart, dropPoint);
+            
+            // TRUCO DE ARQUITECTO: Convertir longitud plana en altura (Y) balística
+            let power = force.length(); 
+            if(power > 0.5) { // Threshold
+                isMoving = true;
+                velocity.x = force.x * 1.5;
+                velocity.z = force.z * 1.5;
+                // El Basket necesita más arco (Y), Soccer es más directo
+                velocity.y = mode === 'BASKET' ? power * 1.2 : power * 0.5; 
+            }
+        } else {
+            // Lógica de Vallas (Swipe Up)
+            let swipeY = dragStart.y - e.clientY;
+            if (swipeY > 50 && ball.position.y <= 1.5) { // Swipe hacia arriba válido
+                velocity.y = 20; // Fuerza de salto
+            }
+        }
+    });
+
+    // 5. LOOP FÍSICO
+    const clock = new THREE.Clock();
+
+    function animate() {
+        requestAnimationFrame(animate);
+        let dt = clock.getDelta();
+        controls.update();
+
+        if (isMoving) {
+            // Aplicar gravedad
+            velocity.y += gravity * dt;
+            ball.position.addScaledVector(velocity, dt);
+
+            // Rebote en el piso
+            if (ball.position.y < 1.5) {
+                ball.position.y = 1.5;
+                if(mode !== 'RUN') {
+                    velocity.y *= -0.6; // Bouncing loss
+                    velocity.x *= 0.8;  // Friction
+                    velocity.z *= 0.8;
+                    
+                    if (Math.abs(velocity.y) < 1 && Math.abs(velocity.z) < 1) {
+                        isMoving = false; // Se detuvo, resetear posición
+                        setTimeout(() => setMode(mode), 1000);
+                    }
+                } else {
+                    velocity.y = 0; // En modo correr, se pega al piso y sigue
+                }
+            }
+
+            // Modo Run: La cámara sigue al jugador
+            if(mode === 'RUN') {
+                camera.position.z = ball.position.z + 15;
+                controls.target.set(ball.position.x, 2, ball.position.z - 10);
+                
+                // Generar vallas infinitas
+                if(ball.position.z < hurdle.position.z) {
+                    hurdle.position.z -= 40;
+                }
+            }
         }
 
-        function toggleInfo(show) {
-            document.getElementById('info-panel').style.display = show ? 'block' : 'none';
-        }
-
-        function animate() {
-            requestAnimationFrame(animate);
-            if(mode !== 'NONE') ball.rotation.y += 0.01;
-            renderer.render(scene, camera);
-        }
-        animate();
-
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        });
-    </script>
+        renderer.render(scene, camera);
+    }
+    animate();
+</script>
 </body>
 </html>
