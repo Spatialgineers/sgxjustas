@@ -2,231 +2,120 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>SGX - LAI PR PoC</title>
+    <title>SGX - LAI PR PoC + Info</title>
     <style>
         body { margin: 0; overflow: hidden; background: #111; font-family: monospace; user-select: none; }
-        #ui { position: absolute; top: 20px; left: 20px; color: #FDCC0D; z-index: 10; background: rgba(50, 82, 123, 0.8); padding: 15px; border: 2px solid #FDCC0D; border-radius: 8px;}
-        h2 { margin: 0 0 10px 0; text-transform: uppercase; letter-spacing: 2px; }
-        button { background: #FDCC0D; color: #111; border: none; padding: 8px 15px; margin: 4px 0; cursor: pointer; font-weight: bold; width: 100%; display: block; text-transform: uppercase;}
-        button:hover { background: #fff; }
-        #hud { position: absolute; bottom: 30px; width: 100%; text-align: center; color: #fff; pointer-events: none; font-size: 20px; text-shadow: 2px 2px 0px #000; }
-        #score { font-size: 24px; font-weight: bold; color: #00ffcc; margin-top: 10px; }
+        #ui { position: absolute; top: 20px; left: 20px; color: #FDCC0D; z-index: 10; background: rgba(50, 82, 123, 0.9); padding: 15px; border: 2px solid #FDCC0D; border-radius: 8px; width: 250px;}
+        h2 { margin: 0 0 10px 0; font-size: 16px; text-transform: uppercase; letter-spacing: 2px; }
+        button { background: #FDCC0D; color: #111; border: none; padding: 10px; margin: 5px 0; cursor: pointer; font-weight: bold; width: 100%; text-transform: uppercase; transition: 0.2s; }
+        button:hover { background: #fff; transform: scale(1.02); }
+        
+        /* Botón de Info Dinámico */
+        #btn-info { background: #00ffcc; color: #111; display: none; margin-top: 15px; }
+
+        /* Panel de Información (Modal) */
+        #info-panel { 
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 320px; background: #32527B; color: #fff; border: 3px solid #FDCC0D;
+            padding: 20px; display: none; z-index: 100; box-shadow: 0 0 30px rgba(0,0,0,0.8);
+        }
+        #info-panel h3 { color: #FDCC0D; margin-top: 0; text-transform: uppercase; }
+        #info-panel p { line-height: 1.4; font-size: 14px; }
+        #close-info { background: #ff4444; color: white; margin-top: 10px; }
+
+        #hud { position: absolute; bottom: 30px; width: 100%; text-align: center; color: #fff; pointer-events: none; font-size: 18px; text-shadow: 2px 2px 0px #000; }
+        #score { font-size: 20px; font-weight: bold; color: #00ffcc; margin-top: 10px; border-top: 1px solid #FDCC0D; padding-top: 10px; }
     </style>
 </head>
 <body>
+
     <div id="ui">
-        <h2>LAI PR - CORE FÍSICO</h2>
-        <button onclick="setMode('RUN')">1. 100m Dash (Atletismo)</button>
-        <button onclick="setMode('BASKET')">2. Tiro Libre (Baloncesto)</button>
-        <button onclick="setMode('SOCCER')">3. Penal (Fútbol)</button>
-        <div id="score">Puntos: 0</div>
+        <h2>LAI PR - SISTEMA</h2>
+        <button onclick="setMode('RUN')">1. 100m Dash</button>
+        <button onclick="setMode('BASKET')">2. Baloncesto</button>
+        <button onclick="setMode('SOCCER')">3. Fútbol</button>
+        <div id="score">PUNTOS: 0</div>
+        <button id="btn-info" onclick="toggleInfo(true)">[ ! ] INFO VENUE</button>
     </div>
-    <div id="hud">Selecciona una disciplina para empezar</div>
+
+    <div id="info-panel">
+        <h3 id="info-title">Título</h3>
+        <p id="info-text">Contenido de la información...</p>
+        <button id="close-info" onclick="toggleInfo(false)">CERRAR</button>
+    </div>
+
+    <div id="hud">Selecciona una disciplina</div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
-        // 1. SETUP DE ESCENA (Arquitectura Base)
+        // DATA DE VENUES (Tu capa estratégica)
+        const venueData = {
+            'RUN': {
+                title: "Estadio Centroamericano",
+                text: "Ubicado en Mayagüez. La pista sintética es de grado olímpico. Aquí se rompió el récord de las Justas en 2010. Clave: Mantén el ritmo de la batucada."
+            },
+            'BASKET': {
+                title: "Auditorio Juan 'Pachín' Vicéns",
+                text: "La casa de los Leones en Ponce. Un venue legendario para las finales de la LAI. La presión del público afecta el pulso del tirador."
+            },
+            'SOCCER': {
+                title: "Campo de Fútbol - Colegio",
+                text: "El RUM (Mayagüez) suele ser host de las eliminatorias. El viento que baja de las montañas de la Sultana del Oeste afecta la trayectoria del balón."
+            }
+        };
+
+        // SETUP BÁSICO
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x87CEEB); // Cielo azul simple
+        scene.background = new THREE.Color(0x1a1a2e);
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.shadowMap.enabled = true;
         document.body.appendChild(renderer.domElement);
 
-        // Luces
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
-        scene.add(ambientLight);
-        const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
-        dirLight.position.set(10, 20, 10);
-        dirLight.castShadow = true;
-        scene.add(dirLight);
-
-        // Entorno (Cancha/Pista)
-        const planeGeo = new THREE.PlaneGeometry(100, 100);
-        const planeMat = new THREE.MeshStandardMaterial({ color: 0x2d5a27 }); // Verde grama
-        const plane = new THREE.Mesh(planeGeo, planeMat);
-        plane.rotation.x = -Math.PI / 2;
-        plane.receiveShadow = true;
-        scene.add(plane);
-
-        // 2. PRIMITIVAS DE JUEGO (Assets Dinámicos)
-        // Bola
-        const ballGeo = new THREE.SphereGeometry(0.4, 32, 32);
-        const ballMat = new THREE.MeshStandardMaterial({ color: 0xff5500 });
-        const ball = new THREE.Mesh(ballGeo, ballMat);
-        ball.castShadow = true;
+        const ball = new THREE.Mesh(new THREE.SphereGeometry(0.4), new THREE.MeshStandardMaterial({ color: 0xffffff }));
         scene.add(ball);
+        const light = new THREE.PointLight(0xffffff, 1, 100);
+        light.position.set(10, 10, 10);
+        scene.add(light);
+        scene.add(new THREE.AmbientLight(0x404040));
 
-        // Aro de Basket (Toroide)
-        const hoopGeo = new THREE.TorusGeometry(0.6, 0.05, 16, 32);
-        const hoopMat = new THREE.MeshStandardMaterial({ color: 0xff0000 });
-        const hoop = new THREE.Mesh(hoopGeo, hoopMat);
-        hoop.position.set(0, 3.05, -10); // Altura reglamentaria aprox
-        hoop.rotation.x = Math.PI / 2;
-        scene.add(hoop);
-        
-        const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 3.05), new THREE.MeshStandardMaterial({color: 0x888888}));
-        pole.position.set(0, 1.525, -10.8);
-        scene.add(pole);
-
-        // Portería de Fútbol (Caja hueca visualizada con líneas)
-        const goalGeo = new THREE.BoxGeometry(4, 2, 1);
-        const goalEdges = new THREE.EdgesGeometry(goalGeo);
-        const goalMat = new THREE.LineBasicMaterial({ color: 0xffffff, linewidth: 2 });
-        const goal = new THREE.LineSegments(goalEdges, goalMat);
-        goal.position.set(0, 1, -15);
-        scene.add(goal);
-
-        // Corredor (Cápsula/Cilindro)
-        const runnerGeo = new THREE.CylinderGeometry(0.4, 0.4, 1.8);
-        const runnerMat = new THREE.MeshStandardMaterial({ color: 0x32527B }); // Azul SGX
-        const runner = new THREE.Mesh(runnerGeo, runnerMat);
-        runner.castShadow = true;
-        scene.add(runner);
-
-        // 3. ESTADOS Y FÍSICAS (El Motor Interno)
         let mode = 'NONE';
         let score = 0;
-        let isMoving = false;
-        let velocity = new THREE.Vector3();
-        const gravity = -15; // Gravedad aumentada para "snap"
-        
-        // Controles Drag & Drop (Tiro parabolico)
-        let isDragging = false;
-        let dragStart = { x: 0, y: 0 };
 
         function setMode(newMode) {
             mode = newMode;
-            isMoving = false;
-            ball.visible = false;
-            hoop.visible = false;
-            pole.visible = false;
-            goal.visible = false;
-            runner.visible = false;
-            velocity.set(0,0,0);
+            ball.position.set(0, 0.4, -2);
+            document.getElementById('hud').innerText = `MODO: ${mode}`;
             
-            document.getElementById('hud').innerText = '';
+            // Mostrar botón de info
+            document.getElementById('btn-info').style.display = 'block';
+            
+            // Update modal content ahead of time
+            document.getElementById('info-title').innerText = venueData[mode].title;
+            document.getElementById('info-text').innerText = venueData[mode].text;
 
-            if(mode === 'BASKET') {
-                camera.position.set(0, 2, 0);
-                camera.lookAt(0, 3, -10);
-                ball.position.set(0, 0.5, -2);
-                ball.visible = true;
-                hoop.visible = true;
-                pole.visible = true;
-                ballMat.color.setHex(0xff5500); // Naranja basket
-                document.getElementById('hud').innerText = 'Click, arrastra hacia abajo y suelta para lanzar';
-            } 
-            else if(mode === 'SOCCER') {
-                camera.position.set(0, 1.5, 0);
-                camera.lookAt(0, 1, -15);
-                ball.position.set(0, 0.4, -2);
-                ball.visible = true;
-                goal.visible = true;
-                ballMat.color.setHex(0xffffff); // Blanco fútbol
-                document.getElementById('hud').innerText = 'Click, arrastra hacia abajo y suelta para patear';
-            }
-            else if(mode === 'RUN') {
-                runner.position.set(0, 0.9, 0);
-                runner.visible = true;
-                camera.position.set(0, 3, 5);
-                camera.lookAt(runner.position);
-                document.getElementById('hud').innerText = 'Presiona "ESPACIO" repetidamente para correr';
-            }
+            // Reset camera for mode
+            if(mode === 'RUN') camera.position.set(0, 2, 5);
+            else camera.position.set(0, 1.5, 2);
+            camera.lookAt(0,0,0);
         }
 
-        // Entradas de Usuario
-        window.addEventListener('mousedown', (e) => {
-            if(mode === 'BASKET' || mode === 'SOCCER') {
-                isDragging = true;
-                dragStart.x = e.clientX;
-                dragStart.y = e.clientY;
-            }
-        });
-
-        window.addEventListener('mouseup', (e) => {
-            if(!isDragging) return;
-            isDragging = false;
-            if(isMoving) return; // Ya está en el aire
-
-            let dragY = dragStart.y - e.clientY; // Arrastrar hacia abajo da Y positivo
-            let dragX = e.clientX - dragStart.x; 
-
-            if(dragY > 10) { // Umbral mínimo
-                isMoving = true;
-                // Matemáticas de vectores basadas en el input (Tu "Ojo Métrico" ajustará esto)
-                if(mode === 'BASKET') {
-                    velocity.set(dragX * 0.02, dragY * 0.05, -dragY * 0.06);
-                } else if(mode === 'SOCCER') {
-                    velocity.set(dragX * 0.03, dragY * 0.015, -dragY * 0.08); // Tiro más rasante
-                }
-            }
-        });
-
-        window.addEventListener('keydown', (e) => {
-            if(mode === 'RUN' && e.code === 'Space') {
-                runner.position.z -= 0.5; // Avanza
-                camera.position.z -= 0.5; // Cámara lo sigue
-                
-                if(runner.position.z < -50) {
-                    score += 100;
-                    document.getElementById('score').innerText = 'Puntos: ' + score;
-                    setMode('RUN'); // Reset
-                }
-            }
-        });
-
-        // 4. LOOP DE RENDERIZADO (Euler Integration Physics)
-        const clock = new THREE.Clock();
+        function toggleInfo(show) {
+            document.getElementById('info-panel').style.display = show ? 'block' : 'none';
+        }
 
         function animate() {
             requestAnimationFrame(animate);
-            let dt = clock.getDelta();
-
-            if(isMoving && (mode === 'BASKET' || mode === 'SOCCER')) {
-                // Física básica
-                velocity.y += gravity * dt;
-                ball.position.addScaledVector(velocity, dt);
-
-                // Colisión con el piso
-                if(ball.position.y < 0.4) {
-                    ball.position.y = 0.4;
-                    velocity.y *= -0.6; // Rebote perdiendo energía
-                    velocity.z *= 0.8;  // Fricción
-                    velocity.x *= 0.8;
-                    
-                    if(Math.abs(velocity.y) < 0.5 && Math.abs(velocity.z) < 0.5) {
-                        isMoving = false; // Se detuvo
-                        setTimeout(() => setMode(mode), 1000); // Reset después de 1 seg
-                    }
-                }
-
-                // Detección de Anotación (Bounding Box simple)
-                if(mode === 'BASKET' && ball.position.y > 2.8 && ball.position.y < 3.2 && ball.position.z < -9.5 && ball.position.z > -10.5) {
-                    if(Math.abs(ball.position.x) < 0.5 && velocity.y < 0) { // Entrando por arriba
-                        score += 3;
-                        document.getElementById('score').innerText = 'Puntos: ' + score;
-                        hoopMat.color.setHex(0x00ff00); // Feedback visual
-                        isMoving = false;
-                        setTimeout(() => { hoopMat.color.setHex(0xff0000); setMode('BASKET'); }, 1000);
-                    }
-                }
-
-                if(mode === 'SOCCER' && ball.position.z < -15 && ball.position.z > -16) {
-                    if(Math.abs(ball.position.x) < 2 && ball.position.y < 2) {
-                        score += 1;
-                        document.getElementById('score').innerText = 'Puntos: ' + score;
-                        goalMat.color.setHex(0x00ff00);
-                        isMoving = false;
-                        setTimeout(() => { goalMat.color.setHex(0xffffff); setMode('SOCCER'); }, 1000);
-                    }
-                }
-            }
-
+            if(mode !== 'NONE') ball.rotation.y += 0.01;
             renderer.render(scene, camera);
         }
         animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
     </script>
 </body>
 </html>
