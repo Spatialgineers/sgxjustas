@@ -3,133 +3,208 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SGX - Swipe Core Engine</title>
+    <title>SGX - Core Engine (Realistic Prototype)</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
         * { box-sizing: border-box; }
-        body { margin: 0; overflow: hidden; background-color: #050508; font-family: 'Share Tech Mono', monospace; color: #FDCC0D; user-select: none; touch-action: none; }
+        body { margin: 0; overflow: hidden; background-color: #e0e0e0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #333; user-select: none; touch-action: none; }
         
-        #ui { position: absolute; top: 15px; left: 15px; z-index: 10; display: flex; gap: 10px; flex-wrap: wrap; width: 90%;}
+        #ui { position: absolute; top: 20px; left: 20px; z-index: 10; display: flex; gap: 10px; flex-wrap: wrap; width: 90%;}
         
         button { 
-            background: rgba(50, 82, 123, 0.6); color: #FDCC0D; border: none; 
-            border-left: 3px solid #FDCC0D; border-right: 3px solid #FDCC0D;
-            padding: 10px 15px; font-family: 'Share Tech Mono', monospace; font-size: 14px; 
-            cursor: pointer; text-transform: uppercase; font-weight: bold;
-            clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
-            backdrop-filter: blur(4px); transition: 0.2s;
+            background: #ffffff; color: #333; border: 1px solid #ccc; 
+            border-radius: 6px; padding: 10px 20px; font-size: 14px; 
+            cursor: pointer; font-weight: 600; transition: 0.2s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
-        button:hover, button.active { background: rgba(0, 255, 255, 0.2); color: #fff; border-color: #00FFFF; }
+        button:hover, button.active { 
+            background: #32527B; color: #fff; border-color: #32527B; 
+        }
 
-        #hud { position: absolute; bottom: 40px; width: 100%; text-align: center; color: #00FFFF; font-size: 16px; text-shadow: 0 0 10px #00FFFF; pointer-events: none; }
-        #score-display { position: absolute; top: 70px; left: 15px; font-size: 24px; font-weight: bold; color: #fff; text-shadow: 0 0 10px #fff;}
+        #hud { position: absolute; bottom: 40px; width: 100%; text-align: center; font-size: 15px; font-weight: 500; pointer-events: none; color: #555; }
+        #score-display { position: absolute; top: 80px; left: 20px; font-size: 24px; font-weight: bold; color: #333; }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
 
     <div id="ui">
-        <button id="btn-run" onclick="setMode('RUN')">1. VALLAS</button>
-        <button id="btn-basket" onclick="setMode('BASKET')">2. BASKET</button>
-        <button id="btn-soccer" onclick="setMode('SOCCER')">3. SOCCER</button>
+        <button id="btn-run" onclick="setMode('RUN')">Vallas</button>
+        <button id="btn-basket" onclick="setMode('BASKET')">Basketball</button>
+        <button id="btn-soccer" onclick="setMode('SOCCER')">Soccer</button>
     </div>
-    <div id="score-display">PUNTOS: 0</div>
-    <div id="hud">HAZ SWIPE UP PARA EMPEZAR</div>
+    <div id="score-display">0 pts</div>
+    <div id="hud">Haz swipe hacia arriba para lanzar</div>
 
 <script>
-    // 1. ARQUITECTURA BASE 3D (CÁMARA ESTÁTICA)
+    // 1. ARQUITECTURA BASE (Iluminación de Estudio Limpia)
     const scene = new THREE.Scene();
-    scene.fog = new THREE.FogExp2(0x050508, 0.015);
+    scene.background = new THREE.Color(0xdadada);
+    scene.fog = new THREE.Fog(0xdadada, 20, 80);
     
-    // La cámara no se mueve. Se queda fija detrás de la bola.
     const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setClearColor(0x050508);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     document.body.appendChild(renderer.domElement);
 
-    // Luces
-    scene.add(new THREE.AmbientLight(0xffffff, 0.5));
-    const dirLight = new THREE.DirectionalLight(0xFDCC0D, 1);
+    // Luces realistas
+    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.6);
+    hemiLight.position.set(0, 20, 0);
+    scene.add(hemiLight);
+
+    const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
     dirLight.position.set(10, 20, 10);
+    dirLight.castShadow = true;
+    dirLight.shadow.mapSize.width = 1024;
+    dirLight.shadow.mapSize.height = 1024;
+    dirLight.shadow.camera.near = 0.5;
+    dirLight.shadow.camera.far = 50;
+    dirLight.shadow.camera.left = -15;
+    dirLight.shadow.camera.right = 15;
+    dirLight.shadow.camera.top = 15;
+    dirLight.shadow.camera.bottom = -15;
     scene.add(dirLight);
 
-    const grid = new THREE.GridHelper(200, 50, 0x32527B, 0x111111);
-    scene.add(grid);
+    // Piso sólido
+    const floor = new THREE.Mesh(
+        new THREE.PlaneGeometry(200, 200), 
+        new THREE.MeshStandardMaterial({ color: 0xeeeeee, roughness: 0.8, metalness: 0.1 })
+    );
+    floor.rotation.x = -Math.PI / 2;
+    floor.receiveShadow = true;
+    scene.add(floor);
 
-    // 2. PRIMITIVAS Y ASSETS
+    // 2. ACTIVOS Y CAJAS DE COLISIÓN (Hitboxes)
     const ballRadius = 0.8;
-    const ball = new THREE.Mesh(new THREE.SphereGeometry(ballRadius, 32, 32), new THREE.MeshStandardMaterial({ color: 0xff5500 }));
+    const ball = new THREE.Mesh(
+        new THREE.SphereGeometry(ballRadius, 32, 32), 
+        new THREE.MeshStandardMaterial({ color: 0xd55e00, roughness: 0.4, metalness: 0.1 })
+    );
+    ball.castShadow = true;
     scene.add(ball);
 
     // Canasto (Basket)
     const hoop = new THREE.Group();
-    const ring = new THREE.Mesh(new THREE.TorusGeometry(1.2, 0.1, 16, 32), new THREE.MeshStandardMaterial({ color: 0x00FFFF }));
+    const ring = new THREE.Mesh(
+        new THREE.TorusGeometry(1.2, 0.1, 16, 32), 
+        new THREE.MeshStandardMaterial({ color: 0xcc0000, roughness: 0.5 })
+    );
     ring.rotation.x = Math.PI / 2;
+    ring.castShadow = true;
     hoop.add(ring);
-    const board = new THREE.Mesh(new THREE.BoxGeometry(4, 3, 0.1), new THREE.MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: 0.5 }));
+    
+    // Tablero con grosor físico para colisión
+    const board = new THREE.Mesh(
+        new THREE.BoxGeometry(4, 3, 0.2), 
+        new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.2, transparent: true, opacity: 0.9 })
+    );
     board.position.set(0, 1.5, -1.3);
+    board.castShadow = true;
     hoop.add(board);
     scene.add(hoop);
+    
+    const boardBox = new THREE.Box3();
 
     // Portería (Soccer)
-    const goal = new THREE.Mesh(new THREE.BoxGeometry(8, 4, 2), new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: true }));
+    const goal = new THREE.Group();
+    const postMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.3 });
+    const leftPost = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 4), postMat);
+    leftPost.position.set(-4, 2, 0);
+    leftPost.castShadow = true;
+    const rightPost = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 4), postMat);
+    rightPost.position.set(4, 2, 0);
+    rightPost.castShadow = true;
+    const topBar = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 8.3), postMat);
+    topBar.rotation.z = Math.PI / 2;
+    topBar.position.set(0, 4, 0);
+    topBar.castShadow = true;
+
+    // Volumen invisible de la portería para detectar si "entró" o pegó en el poste
+    const netArea = new THREE.Mesh(new THREE.BoxGeometry(8, 4, 2), new THREE.MeshBasicMaterial({ visible: false }));
+    netArea.position.set(0, 2, -1);
+    
+    goal.add(leftPost, rightPost, topBar, netArea);
     scene.add(goal);
+    
+    const goalBox = new THREE.Box3(); // Representa la portería completa para colisiones
 
     // Valla (Run)
-    const hurdle = new THREE.Mesh(new THREE.BoxGeometry(6, 2, 0.5), new THREE.MeshStandardMaterial({ color: 0xFF0055 }));
+    const hurdle = new THREE.Mesh(
+        new THREE.BoxGeometry(6, 1.5, 0.5), 
+        new THREE.MeshStandardMaterial({ color: 0x32527B, roughness: 0.6 })
+    );
+    hurdle.castShadow = true;
     scene.add(hurdle);
 
-    // 3. ESTADOS Y FÍSICAS
+    // 3. FÍSICAS FLUIDAS Y MOTOR DE ROTACIÓN
     let mode = 'NONE';
     let isMoving = false;
     let velocity = new THREE.Vector3();
-    const gravity = -60; // Gravedad fuerte para que caiga rápido y no flote
+    let spin = 0; // Efecto Magnus para la curva (física del balón)
+    const gravity = -35; // Gravedad realista (no -60 que parece plomo, no -20 que parece luna)
     let score = 0;
 
-    // Posición inicial de la bola (Punto de saque)
     const startPos = new THREE.Vector3(0, ballRadius, 0);
+
+    function updateScore(points) {
+        score += points;
+        document.getElementById('score-display').innerText = score + " pts";
+    }
 
     function setMode(newMode) {
         mode = newMode;
         isMoving = false;
         velocity.set(0,0,0);
+        spin = 0;
         ball.position.copy(startPos);
-        
+        ball.rotation.set(0,0,0);
+
         document.querySelectorAll('button').forEach(b => b.classList.remove('active'));
         document.getElementById('btn-' + mode.toLowerCase()).classList.add('active');
 
-        // Resetear visuales
         hoop.visible = false; goal.visible = false; hurdle.visible = false;
 
+        // Configuración de Materiales y Cámara para que parezca una simulación y no un juguete
         if(mode === 'BASKET') {
             camera.position.set(0, 4, 10);
-            camera.lookAt(0, 4, -15);
+            camera.lookAt(0, 5, -15);
             hoop.visible = true;
-            hoop.position.set(0, 8, -25); // Canasto lejos y alto
-            ball.material.color.setHex(0xff5500);
-            document.getElementById('hud').innerText = "SWIPE UP RÁPIDO PARA TIRAR AL ARO";
+            hoop.position.set(0, 7, -20); // Ajuste de escala humana
+            
+            // Actualizar Hitbox (Box3) después de mover el tablero
+            hoop.updateMatrixWorld(true);
+            boardBox.setFromObject(board);
+            
+            ball.material.color.setHex(0xd55e00);
+            document.getElementById('hud').innerText = "Tiro libre. Haz swipe para lanzar.";
         } 
         else if(mode === 'SOCCER') {
-            camera.position.set(0, 3, 10);
+            camera.position.set(0, 3, 12);
             camera.lookAt(0, 1, -20);
             goal.visible = true;
-            goal.position.set(0, 2, -30); // Portería lejos
+            goal.position.set(0, 0, -25); 
+            
+            // Hitbox de la portería
+            goal.updateMatrixWorld(true);
+            goalBox.setFromObject(goal);
+            
             ball.material.color.setHex(0xffffff);
-            document.getElementById('hud').innerText = "SWIPE UP PARA PATEAR (CURVA CON SWIPE DIAGONAL)";
+            document.getElementById('hud').innerText = "Tiro con efecto. Swipe diagonal para curvar.";
         }
         else if(mode === 'RUN') {
             camera.position.set(0, 4, 8);
             camera.lookAt(0, 1, -10);
             hurdle.visible = true;
-            hurdle.position.set(0, 1, -30);
-            ball.material.color.setHex(0x32527B); 
-            document.getElementById('hud').innerText = "SWIPE UP PARA SALTAR LA VALLA";
-            isMoving = true; // El juego corre automáticamente
+            hurdle.position.set(0, 0.75, -25);
+            ball.material.color.setHex(0x32527B);
+            document.getElementById('hud').innerText = "Carrera. Swipe arriba para saltar.";
+            isMoving = true; 
         }
     }
 
-    // 4. MOTOR DE SWIPE (El nuevo Input System)
+    // 4. LÓGICA DE SWIPE CON DRAG AERODINÁMICO
     let touchStart = { y: 0, x: 0, time: 0 };
 
     window.addEventListener('pointerdown', (e) => {
@@ -142,89 +217,149 @@
     window.addEventListener('pointerup', (e) => {
         if(mode === 'NONE' || (isMoving && mode !== 'RUN')) return;
 
-        let deltaY = touchStart.y - e.clientY; // Positivo si es swipe hacia arriba
-        let deltaX = e.clientX - touchStart.x; // Dirección horizontal
-        let timeLapse = (Date.now() - touchStart.time) / 1000; // Tiempo en segundos
+        let deltaY = touchStart.y - e.clientY; 
+        let deltaX = e.clientX - touchStart.x; 
+        let timeLapse = (Date.now() - touchStart.time) / 1000; 
 
-        if (deltaY > 30 && timeLapse < 1.0) { // Validar que fue un Swipe rápido hacia arriba
-            
-            // Calcular la potencia basada en distancia del swipe y qué tan rápido se hizo
+        if (deltaY > 20 && timeLapse < 0.8) { 
             let swipeSpeed = deltaY / timeLapse; 
-            
-            // Limitar la potencia máxima
-            if(swipeSpeed > 2500) swipeSpeed = 2500;
+            // Limitar para que el usuario no mande la bola fuera de cámara
+            if(swipeSpeed > 2800) swipeSpeed = 2800;
 
             if (mode === 'RUN') {
-                // En modo Run, el swipe solo afecta el salto (Y)
                 if(ball.position.y <= ballRadius + 0.1) {
-                    velocity.y = 20; // Brinco
+                    velocity.y = 16; 
                 }
             } else {
-                // En Basket y Soccer, el swipe lanza la bola hacia adelante (-Z) y hacia arriba (Y)
                 isMoving = true;
                 
-                // Mapeo de la fuerza a vectores 3D (Multiplicadores ajustables)
-                let zForce = swipeSpeed * 0.02; // Profundidad
-                let yForce = swipeSpeed * 0.015; // Altura
-                let xForce = deltaX * 0.05; // Dirección lateral (Curva/Puntería)
+                // Mapeo preciso de fuerza vs física
+                let zForce = swipeSpeed * 0.015; 
+                let yForce = swipeSpeed * 0.012; 
+                let xForce = deltaX * 0.05; 
+
+                // Guardar la dirección del swipe horizontal como rotación para simular el "Efecto Magnus"
+                spin = deltaX * 0.04; 
 
                 if (mode === 'BASKET') {
-                    velocity.set(xForce, yForce * 1.5, -zForce); // Más arco
+                    // Más ángulo hacia arriba
+                    velocity.set(xForce, yForce * 1.5, -zForce); 
                 } else if (mode === 'SOCCER') {
-                    velocity.set(xForce, yForce * 0.6, -zForce * 1.2); // Más directo, menos altura
+                    // Más dirección directa (line drive) y menos altura
+                    velocity.set(xForce, yForce * 0.8, -zForce * 1.3); 
                 }
             }
         }
     });
 
-    // 5. LOOP FÍSICO Y RENDER
+    // 5. MOTOR FÍSICO Y MANEJO DE COLISIONES SÓLIDO (El Core que pedías)
     const clock = new THREE.Clock();
+    const ballSphere = new THREE.Sphere();
 
     function animate() {
         requestAnimationFrame(animate);
         let dt = clock.getDelta();
+        if(dt > 0.1) dt = 0.1; // Para evitar que un lagspike rompa la física y atraviese objetos
 
         if (isMoving) {
-            // Aplicar Gravedad
-            velocity.y += gravity * dt;
-            ball.position.addScaledVector(velocity, dt);
-
-            // Choque con el piso
-            if (ball.position.y < ballRadius) {
-                ball.position.y = ballRadius;
+            
+            // Fricción del aire (Drag): hace que el vuelo se vea orgánico y no lineal
+            if(mode !== 'RUN') {
+                velocity.z *= 0.99; 
+                velocity.x *= 0.99;
                 
-                if (mode !== 'RUN') {
-                    // Física de rebote para Basket y Soccer
-                    velocity.y *= -0.5; 
-                    velocity.z *= 0.8; 
-                    velocity.x *= 0.8; 
-                    
-                    if (Math.abs(velocity.y) < 1 && Math.abs(velocity.z) < 1) {
-                        isMoving = false;
-                        setTimeout(() => setMode(mode), 1000); // Reset de la bola
-                    }
-                } else {
-                    velocity.y = 0; // En modo Run, aterriza y sigue "corriendo"
+                // Aplicar Curva (Efecto Magnus) para Soccer: Si la bola gira, empuja la bola hacia el lado
+                if(mode === 'SOCCER' && ball.position.y > ballRadius) {
+                    velocity.x -= spin * dt * 2;
                 }
             }
 
-            // LÓGICA DE ILUSIÓN DE MOVIMIENTO (Modo RUN)
-            if (mode === 'RUN') {
-                // La bola y la cámara NO se mueven en Z. La valla viene hacia la cámara.
-                hurdle.position.z += 20 * dt; // Velocidad del mundo hacia el jugador
+            // Aplicar gravedad y mover bola
+            velocity.y += gravity * dt;
+            ball.position.addScaledVector(velocity, dt);
+            
+            // Rotación basada en velocidad para que luzca real
+            ball.rotation.x += velocity.z * dt * 0.5;
+            ball.rotation.z -= velocity.x * dt * 0.5;
+            ball.rotation.y += spin * dt;
 
-                // Si la valla pasa detrás de la cámara, reciclarla
+            // ACTUALIZAR ESFERA DE COLISIÓN
+            ballSphere.set(ball.position, ballRadius);
+
+            // ============================================
+            // RESOLUCIÓN DE COLISIONES SÓLIDA
+            // ============================================
+
+            // A) TABLERO DE BASKET
+            if (mode === 'BASKET') {
+                if (boardBox.intersectsSphere(ballSphere)) {
+                    // Corregir clipping (penetración) sacando la bola del tablero (Z positiva)
+                    let intersectionDepth = ballSphere.radius - Math.abs(boardBox.max.z - ballSphere.center.z);
+                    if(intersectionDepth > 0 && velocity.z < 0) {
+                        ball.position.z += intersectionDepth + 0.05;
+                    }
+                    
+                    // Invertir velocidad en Z (amortiguación del golpe contra madera)
+                    velocity.z *= -0.4; 
+                    // Fricción vertical y lateral del tablero
+                    velocity.y *= 0.8;
+                    velocity.x *= 0.8;
+                    
+                    updateScore(2);
+                }
+            }
+
+            // B) POSTES Y RED DE SOCCER
+            if (mode === 'SOCCER') {
+                if (goalBox.intersectsSphere(ballSphere)) {
+                    // Simplificación: si toca la caja exterior y está entrando (Z negativa)
+                    if (velocity.z < 0 && ball.position.z < goalBox.max.z) {
+                        // Rebotar en la malla (red)
+                        ball.position.z = goalBox.max.z + ballRadius; 
+                        velocity.z *= -0.2; // La red absorbe mucha energía
+                        velocity.x *= 0.5;
+                        velocity.y *= 0.5;
+                        updateScore(3);
+                    }
+                }
+            }
+
+            // C) SUELO Y REBOTE GENERAL
+            if (ball.position.y < ballRadius) {
+                ball.position.y = ballRadius; // Corregir clipping con el suelo
+                
+                if (mode !== 'RUN') {
+                    // Amortiguación del bote en el piso
+                    velocity.y *= -0.6; 
+                    velocity.z *= 0.8; 
+                    velocity.x *= 0.8; 
+                    spin *= 0.5; // El bote quita el spin
+                    
+                    // Detener si va muy despacio
+                    if (Math.abs(velocity.y) < 1 && Math.abs(velocity.z) < 1) {
+                        isMoving = false;
+                        setTimeout(() => setMode(mode), 1000); 
+                    }
+                } else {
+                    velocity.y = 0; 
+                    spin *= 0.9;
+                }
+            }
+
+            // D) LÓGICA DE VALLAS (RUN)
+            if (mode === 'RUN') {
+                hurdle.position.z += 20 * dt; 
+                
+                // Reciclar Valla
                 if (hurdle.position.z > 5) {
-                    hurdle.position.z = -40; // Mandarla lejos de nuevo
-                    score += 10;
-                    document.getElementById('score-display').innerText = "PUNTOS: " + score;
+                    hurdle.position.z = -40; 
+                    updateScore(1);
                 }
 
-                // Detección de Colisión (Si la valla choca con la bola)
-                if (Math.abs(hurdle.position.z - ball.position.z) < 1.5 && ball.position.y < hurdle.position.y + 1) {
-                    score -= 5; // Castigo
-                    document.getElementById('score-display').innerText = "PUNTOS: " + score;
-                    hurdle.position.z = -40; // Resetear la valla inmediatamente para no atascarse
+                // Hitbox Valla contra Bola
+                if (Math.abs(hurdle.position.z - ball.position.z) < 1.5 && ball.position.y < hurdle.position.y + ballRadius) {
+                    updateScore(-1);
+                    hurdle.position.z = -40; // Reset rápido para no arrastrar la bola
                 }
             }
         }
@@ -232,8 +367,6 @@
         renderer.render(scene, camera);
     }
     animate();
-
-    // Iniciar con Vallas por defecto para que se vea acción inmediata
     setMode('RUN');
 </script>
 </body>
