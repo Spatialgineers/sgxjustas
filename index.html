@@ -8,219 +8,240 @@
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
 
         :root {
-            --primary: #00ffcc; /* Cyber Cyan */
-            --dark: #050505;
-            --accent: #ff0055; /* Neon Pink */
-            --glass: rgba(10, 10, 15, 0.7);
+            --primary: #008f39; 
+            --dark: #121212;
+            --card: #1e1e1e;
+            --text: #f4f4f4;
+            --accent: #FDCC0D; 
+            --glass: rgba(18, 18, 18, 0.85);
         }
         
-        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; touch-action: none; font-family: 'Orbitron', sans-serif; }
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; touch-action: none; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
         
-        body { background-color: #000; color: #fff; overflow: hidden; display: flex; justify-content: center; }
+        body { background-color: #050505; color: var(--text); overflow: hidden; display: flex; justify-content: center; }
         
         #app-container {
             width: 100%; max-width: 480px; height: 100vh; position: relative;
-            background: radial-gradient(circle at center, #111 0%, #000 100%);
-            box-shadow: 0 0 40px rgba(0, 255, 204, 0.2); overflow: hidden;
+            background: transparent;
+            box-shadow: 0 0 40px rgba(0, 0, 0, 0.8); overflow: hidden;
         }
 
-        /* OVERLAY DE SELECCIÓN */
-        #uni-selector, #end-screen {
+        .cyber-font { font-family: 'Orbitron', sans-serif; }
+
+        .screen {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: var(--glass); z-index: 1000;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            display: none; flex-direction: column; align-items: center; justify-content: center;
             backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); padding: 20px;
         }
-        
-        h1 { font-size: 32px; text-transform: uppercase; color: var(--primary); margin-bottom: 10px; text-align: center; text-shadow: 0 0 15px var(--primary), 0 0 5px #fff; letter-spacing: 2px;}
-        p { color: #aaa; margin-bottom: 40px; font-size: 12px; text-align: center; letter-spacing: 1px; }
-        
-        .cyber-btn {
-            width: 100%; max-width: 320px; padding: 15px; margin-bottom: 15px;
-            background: rgba(0,0,0,0.5); border: 1px solid var(--primary); border-radius: 4px;
-            font-size: 16px; font-weight: 700; color: #fff; cursor: pointer;
-            text-transform: uppercase; letter-spacing: 2px; transition: 0.2s;
-            box-shadow: inset 0 0 10px rgba(0,255,204,0.1), 0 0 10px rgba(0,255,204,0.2);
-        }
-        .cyber-btn:active { background: var(--primary); color: #000; transform: scale(0.98); }
-        .btn-uprm { border-color: #008f39; box-shadow: 0 0 10px rgba(0,143,57,0.4); }
-        .btn-inter { border-color: #FDCC0D; box-shadow: 0 0 10px rgba(253,204,13,0.4); }
 
-        /* UI DEL JUEGO */
+        .screen.active { display: flex; animation: fadeIn 0.3s ease-out; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
+        
+        h1 { font-size: 32px; text-transform: uppercase; color: var(--primary); margin-bottom: 10px; text-align: center; text-shadow: 0 4px 10px rgba(0,0,0,0.8); letter-spacing: 1px;}
+        p.subtitle { color: #aaa; margin-bottom: 40px; font-size: 14px; text-align: center; line-height: 1.5; }
+        
+        .uni-btn {
+            width: 100%; max-width: 320px; padding: 18px; margin-bottom: 15px;
+            background: var(--card); border: 2px solid; border-radius: 12px;
+            font-size: 16px; font-weight: 800; color: white; cursor: pointer;
+            text-transform: uppercase; letter-spacing: 1px; transition: 0.2s;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        }
+        .uni-uprm { border-color: #008f39; } .uni-uprm:active { background: #008f39; transform: scale(0.98); }
+        .uni-inter { border-color: #FDCC0D; color: #FDCC0D;} .uni-inter:active { background: #FDCC0D; color: black; transform: scale(0.98);}
+        .uni-iupi { border-color: #cc0000; } .uni-iupi:active { background: #cc0000; transform: scale(0.98);}
+        .uni-sagrado { border-color: #ff007f; } .uni-sagrado:active { background: #ff007f; transform: scale(0.98);}
+
+        .mode-card {
+            width: 100%; max-width: 350px; background: var(--card); border-radius: 12px; padding: 20px;
+            border-left: 4px solid var(--primary); cursor: pointer; transition: 0.2s; margin-bottom: 15px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.4); text-align: left;
+        }
+        .mode-card:active { transform: scale(0.98); background: #252525; }
+        .mode-card-title { font-size: 18px; font-weight: bold; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center;}
+        .mode-card-desc { font-size: 13px; color: #aaa; line-height: 1.4; }
+        .badge { background: var(--primary); color: #000; font-size: 11px; padding: 3px 8px; border-radius: 10px; font-weight: bold; text-transform: uppercase; }
+
         #game-ui { display: none; width: 100%; height: 100%; position: absolute; top: 0; left: 0; pointer-events: none; z-index: 10; }
         
-        /* HEADER (Timer & Score) */
-        #header-hud {
-            position: absolute; top: 20px; width: 100%; padding: 0 20px;
-            display: flex; justify-content: space-between; align-items: flex-start;
-        }
+        #header-hud { position: absolute; top: 20px; width: 100%; padding: 0 20px; display: flex; justify-content: space-between; align-items: flex-start; }
+        .hud-box { background: rgba(0,0,0,0.7); border: 1px solid var(--primary); padding: 10px 15px; border-radius: 8px; backdrop-filter: blur(5px); text-align: center; }
         
-        .hud-box {
-            background: rgba(0,0,0,0.6); border: 1px solid var(--primary);
-            padding: 10px 15px; border-radius: 8px; backdrop-filter: blur(5px);
-            box-shadow: 0 0 10px rgba(0,255,204,0.2); text-align: center;
-        }
-        
-        #timer-val { font-size: 28px; font-weight: 900; color: var(--accent); text-shadow: 0 0 10px var(--accent); }
-        #score-val { font-size: 28px; font-weight: 900; color: var(--primary); text-shadow: 0 0 10px var(--primary); }
-        .hud-label { font-size: 10px; color: #888; text-transform: uppercase; letter-spacing: 1px; }
+        #timer-val, #score-val { font-size: 26px; color: var(--text); }
+        .hud-label { font-size: 10px; color: #888; text-transform: uppercase; letter-spacing: 1px; font-family: sans-serif;}
 
-        #streak-val { position: absolute; top: 80px; width: 100%; text-align: center; font-size: 16px; color: var(--primary); font-weight: 900; letter-spacing: 3px; text-shadow: 0 0 10px var(--primary); }
+        #streak-val { position: absolute; top: 85px; width: 100%; text-align: center; font-size: 16px; color: var(--primary); font-weight: 900; letter-spacing: 3px; text-shadow: 0 2px 5px rgba(0,0,0,0.8); }
 
         #hype-text { 
-            position: absolute; top: 30%; width: 100%; text-align: center; 
-            font-size: 40px; font-weight: 900; color: #fff; text-transform: uppercase;
-            opacity: 0; transform: scale(0.5); transition: 0.2s;
-            text-shadow: 0 0 20px var(--primary);
+            position: absolute; top: 35%; width: 100%; text-align: center; 
+            font-size: 38px; color: #fff; text-transform: uppercase;
+            opacity: 0; transform: scale(0.5); transition: 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            text-shadow: 0 4px 20px var(--primary);
         }
 
-        /* GAUGE DE POTENCIA (Mecánica de Billar) */
-        #power-zone {
-            position: absolute; right: 15px; top: 25%; height: 50%; width: 40px;
-            pointer-events: auto; /* Zona interactiva */
-        }
-        #power-bg {
-            width: 100%; height: 100%; background: rgba(0,0,0,0.8);
-            border: 2px solid #333; border-radius: 20px; overflow: hidden;
-            position: relative; box-shadow: 0 0 15px rgba(0,0,0,0.5);
-        }
-        #power-fill {
-            position: absolute; bottom: 0; left: 0; width: 100%; height: 0%;
-            background: linear-gradient(to top, var(--primary), var(--accent));
-            box-shadow: 0 0 15px var(--accent); transition: height 0.05s;
-        }
-        .gauge-label { position: absolute; bottom: -25px; left: -10px; width: 60px; text-align: center; font-size: 10px; color: #aaa; }
+        /* GAUGE DE POTENCIA */
+        #power-zone { position: absolute; right: 15px; top: 25%; height: 50%; width: 50px; pointer-events: auto; }
+        #power-bg { width: 100%; height: 100%; background: rgba(0,0,0,0.6); border: 2px solid #333; border-radius: 10px; overflow: hidden; position: relative; backdrop-filter: blur(5px); }
+        #power-fill { position: absolute; bottom: 0; left: 0; width: 100%; height: 0%; background: linear-gradient(to top, var(--primary), var(--accent)); transition: height 0.05s; box-shadow: 0 0 10px var(--accent);}
+        .gauge-label { position: absolute; bottom: -25px; left: -10px; width: 70px; text-align: center; font-size: 11px; color: #aaa; font-weight: bold;}
 
-        /* CONTROLES DE MODO */
-        #nav-modes { 
-            position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); 
-            display: flex; gap: 10px; pointer-events: auto;
-        }
-        .mode-btn { 
-            background: rgba(0,0,0,0.8); color: #666; border: 1px solid #333; 
-            border-radius: 4px; padding: 12px; font-size: 12px; 
-            cursor: pointer; font-weight: 700; text-transform: uppercase; transition: 0.3s;
-        }
-        .mode-btn.active { border-color: var(--primary); color: var(--primary); box-shadow: 0 0 15px rgba(0,255,204,0.3); }
+        /* ZONA DE DISPARO DIRECTO */
+        #shoot-zone { position: absolute; left: 0; top: 0; width: 70%; height: 100%; pointer-events: auto; }
 
-        #aim-zone { position: absolute; left: 0; top: 0; width: 75%; height: 100%; pointer-events: auto; }
+        .stat-row { display: flex; justify-content: space-between; width: 100%; max-width: 280px; margin-bottom: 15px; border-bottom: 1px solid #333; padding-bottom: 8px;}
+        .stat-label { color: #aaa; font-size: 14px; font-weight: bold;}
+        .stat-number { color: var(--primary); font-size: 20px; }
+
+        .action-btn { width: 100%; max-width: 280px; padding: 15px; margin-top: 10px; background: transparent; border: 1px solid var(--primary); color: var(--text); border-radius: 8px; font-weight: bold; text-transform: uppercase; cursor: pointer; transition: 0.2s; }
+        .action-btn.fill { background: var(--primary); color: #000; border: none; }
+        .action-btn:active { transform: scale(0.98); }
 
         #canvas-container { width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 0; pointer-events: none;}
-
-        /* SCOREBOARD (END SCREEN) */
-        #end-screen { display: none; }
-        .stat-row { display: flex; justify-content: space-between; width: 100%; max-width: 250px; margin-bottom: 15px; border-bottom: 1px solid #333; padding-bottom: 5px;}
-        .stat-label { color: #888; font-size: 14px; }
-        .stat-number { color: var(--primary); font-size: 18px; font-weight: bold; text-shadow: 0 0 5px var(--primary); }
+        
+        .hud-footer { position: absolute; bottom: 20px; width: 100%; text-align: center; font-size: 11px; color: #666; font-weight: bold; letter-spacing: 1px; }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
 
 <div id="app-container">
-    <div id="uni-selector">
-        <h1>SGX Justas</h1>
-        <p>Selecciona tu tribu para cargar texturas</p>
-        <button class="cyber-btn btn-uprm" onclick="startGame('UPRM')">Colegio (UPRM)</button>
-        <button class="cyber-btn btn-inter" onclick="startGame('Inter')">Interamericana</button>
-        <button class="cyber-btn" onclick="startGame('Default')">Modo Arcade (Default)</button>
+    <div id="screen-uni" class="screen active">
+        <h1>Elige tu Sangre</h1>
+        <p class="subtitle">Representa a tu universidad en las Justas</p>
+        <button class="uni-btn uni-uprm" onclick="selectTeam('UPRM')">Colegio (UPRM)</button>
+        <button class="uni-btn uni-inter" onclick="selectTeam('Inter')">Interamericana</button>
+        <button class="uni-btn uni-iupi" onclick="selectTeam('Gallitos')">La Iupi (UPRRP)</button>
+        <button class="uni-btn uni-sagrado" onclick="selectTeam('Delfines')">Sagrado</button>
+        <div class="hud-footer">POWERED BY SPATIALGINEERS</div>
+    </div>
+
+    <div id="screen-modes" class="screen">
+        <h1 style="font-size: 24px; margin-bottom: 20px;">Lobby de Competencia</h1>
+        
+        <div class="mode-card" onclick="launchGame('BASKET')">
+            <div class="mode-card-title">Tiro Libre <span class="badge">Jugar</span></div>
+            <div class="mode-card-desc">Basket. El tablero oscila. Desliza para dar fuerza.</div>
+        </div>
+
+        <div class="mode-card" onclick="launchGame('SOCCER')">
+            <div class="mode-card-title">Penal Directo <span class="badge">Jugar</span></div>
+            <div class="mode-card-desc">Fútbol. La portería se aleja. Calcula tu potencia.</div>
+        </div>
+
+        <div class="mode-card" onclick="launchGame('RUN')">
+            <div class="mode-card-title">Carrera de Vallas <span class="badge">Jugar</span></div>
+            <div class="mode-card-desc">Atletismo. Desliza hacia abajo para cargar salto.</div>
+        </div>
+        
+        <div class="action-btn" style="border: none; color: #888; margin-top: 20px; font-size: 12px;" onclick="switchScreen('screen-uni')">← Cambiar Universidad</div>
     </div>
 
     <div id="game-ui">
-        <div id="aim-zone"></div>
+        <div id="shoot-zone"></div>
         <div id="power-zone">
             <div id="power-bg"><div id="power-fill"></div></div>
-            <div class="gauge-label">POWER</div>
+            <div class="gauge-label">POTENCIA</div>
         </div>
 
         <div id="header-hud">
             <div class="hud-box">
                 <div class="hud-label">TIEMPO</div>
-                <div id="timer-val">60</div>
+                <div id="timer-val" class="cyber-font">60</div>
             </div>
             <div class="hud-box">
                 <div class="hud-label">PUNTOS</div>
-                <div id="score-val">0</div>
+                <div id="score-val" class="cyber-font">0</div>
             </div>
         </div>
         
-        <div id="streak-val"></div>
-        <div id="hype-text">¡LÍQUIDO!</div>
-
-        <div id="nav-modes">
-            <button id="btn-run" class="mode-btn" onclick="setMode('RUN')">Vallas</button>
-            <button id="btn-basket" class="mode-btn" onclick="setMode('BASKET')">Basket</button>
-            <button id="btn-soccer" class="mode-btn" onclick="setMode('SOCCER')">Fútbol</button>
-        </div>
+        <div id="streak-val" class="cyber-font"></div>
+        <div id="hype-text" class="cyber-font"></div>
     </div>
     
-    <div id="end-screen">
+    <div id="screen-end" class="screen">
         <h1>TIEMPO FUERA</h1>
-        <div class="stat-row"><span class="stat-label">Puntos Totales:</span><span class="stat-number" id="final-score">0</span></div>
-        <div class="stat-row"><span class="stat-label">Racha Máxima:</span><span class="stat-number" id="final-streak">0</span></div>
-        <div class="stat-row" style="margin-bottom: 40px;"><span class="stat-label">Universidad:</span><span class="stat-number" id="final-team">UPRM</span></div>
+        <p class="subtitle" style="margin-bottom: 20px;" id="final-team-label">Representando a UPRM</p>
         
-        <button class="cyber-btn" onclick="shareScore()">Compartir en IG</button>
-        <button class="cyber-btn" style="background: transparent; border-color: #555;" onclick="location.reload()">Jugar de Nuevo</button>
+        <div class="stat-row"><span class="stat-label">Puntos Totales:</span><span class="stat-number cyber-font" id="final-score">0</span></div>
+        <div class="stat-row"><span class="stat-label">Racha Máxima:</span><span class="stat-number cyber-font" id="final-streak">x0</span></div>
+        
+        <div style="margin-top: 30px; width: 100%; display: flex; flex-direction: column; align-items: center;">
+            <button class="action-btn fill" onclick="shareScore()">Compartir en IG</button>
+            <button class="action-btn" onclick="backToLobby()">Volver a Juegos</button>
+        </div>
     </div>
 
     <div id="canvas-container"></div>
 </div>
 
 <script>
-    // --- VARIABLES DE ESTADO Y ARQUITECTURA ---
-    let playerTeam = "";
-    let teamColor = 0x00ffcc; 
-    let mode = 'NONE';
-    
-    // Core Game Loop variables
-    let score = 0;
-    let streak = 1;
-    let maxStreak = 1;
-    let timeLeft = 60;
-    let gameActive = false;
-    let timerInterval;
+    function switchScreen(screenId) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        if(screenId) document.getElementById(screenId).classList.add('active');
+    }
 
-    // Físicas y Control
-    let isMoving = false;
+    let playerTeam = "";
+    let teamColor = 0x008f39; 
+    let activeMode = 'NONE';
+    
+    let score = 0, streak = 1, maxStreak = 1, timeLeft = 60;
+    let gameActive = false, timerInterval;
+
+    let isMoving = false, runSpeedMultiplier = 1;
     let velocity = new THREE.Vector3();
-    let spin = 0;
-    const gravity = -60; // Gravedad pesada para que la bola caiga rápido y no sea letárgico
-    let runSpeedMultiplier = 1;
+    const gravity = -60; 
     let clock = new THREE.Clock();
 
-    // Vectores de Puntería (Billiards Mechanic)
-    let aimAngle = 0; // 0 = hacia adelante (-Z)
-    let powerLevel = 0; // 0.0 a 1.0
-    let isAiming = false;
+    let powerLevel = 0;
     let isCharging = false;
-    const maxBasketForce = 35;
-    const maxSoccerForce = 45;
-
+    const maxBasketForce = 35, maxSoccerForce = 45;
     const startPos = new THREE.Vector3(0, 0.8, 0);
 
-    // --- CARGA DE TEXTURAS (CORS ENABLED) ---
     const texLoader = new THREE.TextureLoader();
     texLoader.setCrossOrigin("anonymous");
     const texUPRM = texLoader.load("https://static.wixstatic.com/media/fe81a7_308d85a6e32b435abefe455e032bd56a~mv2.jpg");
     const texInter = texLoader.load("https://static.wixstatic.com/media/fe81a7_731bfd3f7d1a49f19b4dfb981b8ec8be~mv2.jpg");
 
-    function startGame(team) {
+    function selectTeam(team) {
         playerTeam = team;
-        document.getElementById('uni-selector').style.display = 'none';
-        document.getElementById('game-ui').style.display = 'block';
         
-        if(team === 'UPRM') { teamColor = 0x008f39; ballMat.map = texUPRM; ballMat.color.setHex(0xffffff); }
-        else if(team === 'Inter') { teamColor = 0xFDCC0D; ballMat.map = texInter; ballMat.color.setHex(0xffffff); }
-        else { teamColor = 0x00ffcc; ballMat.color.setHex(teamColor); }
+        if(team === 'UPRM') { 
+            teamColor = 0x008f39; ballMat.map = texUPRM; ballMat.color.setHex(0xffffff); 
+        } else if(team === 'Inter') { 
+            teamColor = 0xFDCC0D; ballMat.map = texInter; ballMat.color.setHex(0xffffff); 
+        } else if(team === 'Gallitos') {
+            teamColor = 0xcc0000; ballMat.map = null; ballMat.color.setHex(teamColor);
+        } else {
+            teamColor = 0xff007f; ballMat.map = null; ballMat.color.setHex(teamColor);
+        }
+        
+        ballMat.needsUpdate = true;
+        ballWireMat.color.setHex(teamColor);
         
         document.documentElement.style.setProperty('--primary', '#' + teamColor.toString(16).padStart(6, '0'));
         grid.material.color.setHex(teamColor);
         ballLight.color.setHex(teamColor);
-        arrowHelper.setColor(teamColor);
-        
-        setMode('BASKET'); 
+        document.getElementById('final-team-label').innerText = `Representando a ${team}`;
+
+        switchScreen('screen-modes');
+    }
+
+    function launchGame(selectedMode) {
+        activeMode = selectedMode;
+        switchScreen(null); 
+        document.getElementById('game-ui').style.display = 'block';
+        resetEnvironmentForMode();
         startGameLoop();
+    }
+
+    function backToLobby() {
+        gameActive = false;
+        clearInterval(timerInterval);
+        document.getElementById('game-ui').style.display = 'none';
+        hoop.visible = false; goal.visible = false; hurdle.visible = false;
+        switchScreen('screen-modes');
     }
 
     function startGameLoop() {
@@ -228,15 +249,15 @@
         gameActive = true;
         updateScore(0, false);
         document.getElementById('timer-val').innerText = timeLeft;
+        document.getElementById('timer-val').style.color = 'var(--text)';
         
+        clearInterval(timerInterval);
         timerInterval = setInterval(() => {
+            if(!gameActive) return;
             timeLeft--;
             document.getElementById('timer-val').innerText = timeLeft;
             if(timeLeft <= 10) document.getElementById('timer-val').style.color = '#ff0055';
-            
-            if(timeLeft <= 0) {
-                endGame();
-            }
+            if(timeLeft <= 0) endGame();
         }, 1000);
     }
 
@@ -244,25 +265,20 @@
         gameActive = false;
         clearInterval(timerInterval);
         document.getElementById('game-ui').style.display = 'none';
-        document.getElementById('end-screen').style.display = 'flex';
-        
         document.getElementById('final-score').innerText = score;
         document.getElementById('final-streak').innerText = "x" + maxStreak;
-        document.getElementById('final-team').innerText = playerTeam;
+        switchScreen('screen-end');
     }
 
-    // --- INTEGRACIÓN SOCIAL (Virality) ---
     function shareScore() {
-        const shareText = `¡Acabo de anotar ${score} puntos con racha x${maxStreak} representando a ${playerTeam} en el SGX Justas Challenge! 🏀🔥 ¿Puedes superarlo?`;
+        const shareText = `¡Anoté ${score} puntos (Racha x${maxStreak}) representando a ${playerTeam} en el SGX Justas Challenge! 🏀🔥 ¿Puedes superarme?`;
         if (navigator.share) {
-            navigator.share({ title: 'SGX Justas', text: shareText, url: window.location.href })
-            .catch(console.error);
+            navigator.share({ title: 'SGX Justas', text: shareText, url: window.location.href }).catch(console.error);
         } else {
             alert("Copia esto para tu Story: \n\n" + shareText);
         }
     }
 
-    // --- SETUP MOTOR 3D (CYBER-TRON) ---
     const container = document.getElementById('canvas-container');
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x050505);
@@ -274,69 +290,60 @@
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     container.appendChild(renderer.domElement);
 
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+    camera.position.set(0, 5, 15);
+    camera.lookAt(0, 2, -10);
+
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
     scene.add(ambientLight);
 
-    const grid = new THREE.GridHelper(200, 100, 0x00ffcc, 0x111111);
+    const grid = new THREE.GridHelper(200, 100, 0x008f39, 0x111111);
     grid.position.y = 0;
     scene.add(grid);
 
-    // --- ACTIVOS DEL JUEGO ---
-    const ballMat = new THREE.MeshStandardMaterial({ roughness: 0.3, metalness: 0.2 });
+    const ballMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
     const ball = new THREE.Mesh(new THREE.SphereGeometry(0.8, 32, 32), ballMat);
     scene.add(ball);
 
-    const ballWire = new THREE.Mesh(new THREE.SphereGeometry(0.85, 16, 16), new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: true, transparent: true, opacity: 0.2 }));
+    const ballWireMat = new THREE.MeshBasicMaterial({ wireframe: true, transparent: true, opacity: 0.8, color: 0x008f39 });
+    const ballWire = new THREE.Mesh(new THREE.SphereGeometry(0.85, 16, 16), ballWireMat);
     ball.add(ballWire);
-    const ballLight = new THREE.PointLight(0x00ffcc, 1.5, 15);
+    
+    const ballLight = new THREE.PointLight(0x008f39, 1.5, 15);
     ball.add(ballLight);
 
-    // Flecha de Puntería Holográfica (Aim Vector)
-    const arrowHelper = new THREE.ArrowHelper(new THREE.Vector3(0,0,-1), new THREE.Vector3(0,0,0), 4, 0x00ffcc, 1, 0.5);
-    scene.add(arrowHelper);
-
-    // Canasto Basket
     const hoop = new THREE.Group();
-    const ring = new THREE.Mesh(new THREE.TorusGeometry(1.2, 0.1, 16, 32), new THREE.MeshBasicMaterial({ color: 0xff0055 })); 
-    ring.rotation.x = Math.PI / 2;
-    hoop.add(ring);
-    const board = new THREE.Mesh(new THREE.BoxGeometry(4.5, 3.5, 0.5), new THREE.MeshStandardMaterial({ color: 0x111, transparent: true, opacity: 0.9 }));
-    board.position.set(0, 1.5, -1.3);
-    const boardLine = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(4.5, 3.5, 0.5)), new THREE.LineBasicMaterial({ color: 0xffffff }));
-    boardLine.position.set(0, 1.5, -1.3);
-    hoop.add(board, boardLine);
-    scene.add(hoop);
-    const boardBox = new THREE.Box3();
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(1.2, 0.1, 16, 32), new THREE.MeshBasicMaterial({ color: 0xff0055 })); ring.rotation.x = Math.PI / 2;
+    const board = new THREE.Mesh(new THREE.BoxGeometry(4.5, 3.5, 0.5), new THREE.MeshStandardMaterial({ color: 0x111, transparent: true, opacity: 0.9 })); board.position.set(0, 1.5, -1.3);
+    const boardLine = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(4.5, 3.5, 0.5)), new THREE.LineBasicMaterial({ color: 0xffffff })); boardLine.position.set(0, 1.5, -1.3);
+    hoop.add(ring, board, boardLine); scene.add(hoop);
+    const boardBox = new THREE.Box3(); hoop.visible = false;
 
-    // Portería Soccer
     const goal = new THREE.Group();
     const postMat = new THREE.MeshBasicMaterial({ color: 0xffffff }); 
     const leftPost = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 4), postMat); leftPost.position.set(-4, 2, 0);
     const rightPost = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 4), postMat); rightPost.position.set(4, 2, 0);
     const topBar = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 8.3), postMat); topBar.rotation.z = Math.PI / 2; topBar.position.set(0, 4, 0);
-    goal.add(leftPost, rightPost, topBar);
-    scene.add(goal);
-    const goalBox = new THREE.Box3();
+    goal.add(leftPost, rightPost, topBar); scene.add(goal);
+    const goalBox = new THREE.Box3(); goal.visible = false;
 
-    // Vallas (Run)
     const hurdle = new THREE.Group();
-    const hBar = new THREE.Mesh(new THREE.BoxGeometry(6, 0.3, 0.3), new THREE.MeshBasicMaterial({ color: 0xff0055 }));
-    hBar.position.y = 1.5;
-    const hLegL = new THREE.Mesh(new THREE.BoxGeometry(0.3, 1.5, 0.3), new THREE.MeshStandardMaterial({color: 0x333})); hLegL.position.set(-2.85, 0.75, 0);
+    const hBar = new THREE.Mesh(new THREE.BoxGeometry(6, 0.3, 0.3), new THREE.MeshBasicMaterial({ color: 0xff0055 })); hBar.position.y = 1.5;
+    const hLegL = new THREE.Mesh(new THREE.BoxGeometry(0.3, 1.5, 0.3), new THREE.MeshBasicMaterial({color: 0x555555})); hLegL.position.set(-2.85, 0.75, 0);
     const hLegR = hLegL.clone(); hLegR.position.set(2.85, 0.75, 0);
     const hurdleVol = new THREE.Mesh(new THREE.BoxGeometry(6.5, 2.0, 1.0), new THREE.MeshBasicMaterial({visible: false})); hurdleVol.position.y = 1.0;
-    hurdle.add(hBar, hLegL, hLegR, hurdleVol);
-    scene.add(hurdle);
-    const hurdleBox = new THREE.Box3(); 
+    hurdle.add(hBar, hLegL, hLegR, hurdleVol); scene.add(hurdle);
+    const hurdleBox = new THREE.Box3(); hurdle.visible = false;
 
-    // --- INTERFAZ LÓGICA (HUD & HYPE) ---
     const hypeEl = document.getElementById('hype-text');
     function showHype(type) {
         let msg = "";
-        if(type === 'score_basket') msg = ["¡SWISH!", "¡LÍQUIDO!", "¡CLUTCH!"][Math.floor(Math.random()*3)];
-        if(type === 'score_soccer') msg = ["¡GOLAZO!", "¡AL ÁNGULO!", "¡MISIL!"][Math.floor(Math.random()*3)];
-        if(type === 'miss') { msg = ["BRICK", "AIRE", "MALA MÍA"]; hypeEl.style.color = "#ff0055"; } 
-        else { hypeEl.style.color = "#fff"; }
+        if(type === 'score_basket') msg = ["¡SWISH!", "¡CLUTCH!"][Math.floor(Math.random()*2)];
+        if(type === 'score_soccer') msg = "¡GOAL!";
+        if(type === 'miss_basket') { msg = "OOPS"; hypeEl.style.color = "#ff0055"; } 
+        if(type === 'miss_soccer') { msg = "SE FUE POR LA ARBOLADA"; hypeEl.style.color = "#ff0055"; hypeEl.style.fontSize = "24px"; } 
+        else { hypeEl.style.color = "var(--primary)"; hypeEl.style.fontSize = "45px"; }
+        
+        if (msg === "") return; 
         
         hypeEl.innerText = msg;
         hypeEl.style.opacity = 1;
@@ -349,106 +356,98 @@
         
         if(isMiss) {
             streak = 1;
-            if(mode !== 'RUN') showHype('miss'); 
+            if(activeMode === 'BASKET') showHype('miss_basket'); 
+            if(activeMode === 'SOCCER') showHype('miss_soccer'); 
         } else {
             score += (points * streak);
             streak++;
             if(streak > maxStreak) maxStreak = streak;
-            if(mode === 'BASKET') showHype('score_basket');
-            if(mode === 'SOCCER') showHype('score_soccer');
+            if(activeMode === 'BASKET') showHype('score_basket');
+            if(activeMode === 'SOCCER') showHype('score_soccer');
         }
         
         document.getElementById('score-val').innerText = score;
         document.getElementById('streak-val').innerText = streak > 1 ? `RACHA x${streak}` : "";
     }
 
-    function setMode(newMode) {
-        mode = newMode;
-        resetPlay();
-        score = 0; streak = 1; updateScore(0, false); // Reset stats on mode change
-
-        document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
-        document.getElementById('btn-' + mode.toLowerCase()).classList.add('active');
-
-        hoop.visible = false; goal.visible = false; hurdle.visible = false;
-        arrowHelper.visible = false;
-
-        if(mode === 'BASKET') {
+    function resetEnvironmentForMode() {
+        hoop.visible = false; goal.visible = false; hurdle.visible = false; 
+        
+        // El Fix Vital: Asegurar que se llame resetBall PRIMERO para limpiar velocidades
+        resetBall();
+        
+        if(activeMode === 'BASKET') {
             camera.position.set(0, 5, 12); camera.lookAt(0, 6, -15);
             hoop.visible = true; hoop.position.set(0, 7, -20);
-            arrowHelper.visible = true;
-        } 
-        else if(mode === 'SOCCER') {
+        } else if(activeMode === 'SOCCER') {
             camera.position.set(0, 3, 12); camera.lookAt(0, 1, -20);
-            goal.visible = true; goal.position.set(0, 0, -35); // Inicia más lejos como pediste
-            arrowHelper.visible = true;
-        }
-        else if(mode === 'RUN') {
+            goal.visible = true; goal.position.set(0, 0, -35);
+        } else if(activeMode === 'RUN') {
             camera.position.set(0, 4, 8); camera.lookAt(0, 1, -10);
             hurdle.visible = true; hurdle.position.set(0, 0, -30);
+            
+            // Re-encender isMoving específicamente para Vallas DESPUÉS de resetBall
             isMoving = true; 
+            runSpeedMultiplier = 1;
         }
     }
 
-    function resetPlay() {
-        isMoving = false;
+    function resetBall() {
+        // En Vallas (RUN), NUNCA apagar isMoving. El mundo siempre se mueve.
+        if (activeMode !== 'RUN') {
+            isMoving = false;
+        }
+        
         ball.position.copy(startPos);
         ball.rotation.set(0,0,0);
         velocity.set(0,0,0);
         powerLevel = 0;
         document.getElementById('power-fill').style.height = '0%';
         hasScoredThisShot = false;
-        
-        aimAngle = 0;
-        arrowHelper.position.copy(startPos);
-        arrowHelper.setDirection(new THREE.Vector3(0,0,-1));
 
-        if(mode === 'SOCCER') {
-            // El post de soccer va retrocediendo en Z basado en racha, pero sin moverse en X
-            let depthMultiplier = Math.min(streak * 2.5, 25); 
+        if(activeMode === 'SOCCER') {
+            let depthMultiplier = Math.min(streak * 3.0, 40); 
             goal.position.set(0, 0, -35 - depthMultiplier);
             goalBox.setFromObject(goal);
         }
+        if(activeMode === 'RUN') {
+            hurdle.position.z = -30;
+        }
     }
 
-    // --- SISTEMA DE CONTROLES (AIM & POWER GAUGE) ---
-    const aimZone = document.getElementById('aim-zone');
+    const shootZone = document.getElementById('shoot-zone');
     const powerZone = document.getElementById('power-zone');
-    const powerFill = document.getElementById('power-fill');
 
-    // 1. Apuntar (Arrastrar izquierda/derecha en pantalla)
-    let lastTouchX = 0;
-    aimZone.addEventListener('pointerdown', (e) => { if(!isMoving) { isAiming = true; lastTouchX = e.clientX; } });
-    aimZone.addEventListener('pointermove', (e) => {
-        if(isAiming && !isMoving) {
-            let deltaX = e.clientX - lastTouchX;
-            aimAngle -= deltaX * 0.01; // Rotar flecha
-            // Limitar ángulo visual para que no disparen hacia atrás
-            if(aimAngle > 1.2) aimAngle = 1.2;
-            if(aimAngle < -1.2) aimAngle = -1.2;
-            
-            let dir = new THREE.Vector3(Math.sin(aimAngle), 0, -Math.cos(aimAngle)).normalize();
-            arrowHelper.setDirection(dir);
-            // Rotar la bola visualmente para dar feedback
-            ball.rotation.y = aimAngle;
-            lastTouchX = e.clientX;
+    let shootStartY = 0;
+    // La condición ahora permite cargar fuerza en RUN (saltando), pero bloquea si el tiro de Basket/Soccer ya está en el aire
+    shootZone.addEventListener('pointerdown', (e) => { 
+        if(gameActive && (!isMoving || activeMode === 'RUN')) { 
+            isCharging = true; shootStartY = e.clientY; 
+        } 
+    });
+    shootZone.addEventListener('pointermove', (e) => {
+        if(isCharging && gameActive) {
+            let deltaY = e.clientY - shootStartY; 
+            powerLevel = Math.max(0, Math.min(1, deltaY / 200)); 
+            document.getElementById('power-fill').style.height = (powerLevel * 100) + '%';
         }
     });
-    aimZone.addEventListener('pointerup', () => { isAiming = false; });
-    aimZone.addEventListener('pointerleave', () => { isAiming = false; });
+    shootZone.addEventListener('pointerup', executeShot);
+    shootZone.addEventListener('pointerleave', () => { if(isCharging) executeShot(); });
 
-    // 2. Potencia (Arrastrar verticalmente en el Slider)
     let powerStartY = 0;
-    powerZone.addEventListener('pointerdown', (e) => { if(!isMoving || mode==='RUN') { isCharging = true; powerStartY = e.clientY; } });
+    powerZone.addEventListener('pointerdown', (e) => { 
+        if(gameActive && (!isMoving || activeMode === 'RUN')) { 
+            isCharging = true; powerStartY = e.clientY; 
+        } 
+    });
     powerZone.addEventListener('pointermove', (e) => {
-        if(isCharging) {
-            let deltaY = e.clientY - powerStartY; // Hacia abajo es positivo
-            powerLevel = Math.max(0, Math.min(1, deltaY / 200)); // Normalizar de 0 a 1 basado en 200px de drag
-            powerFill.style.height = (powerLevel * 100) + '%';
+        if(isCharging && gameActive) {
+            let deltaY = e.clientY - powerStartY; 
+            powerLevel = Math.max(0, Math.min(1, deltaY / 200)); 
+            document.getElementById('power-fill').style.height = (powerLevel * 100) + '%';
         }
     });
-    
-    // 3. ¡Disparar!
     powerZone.addEventListener('pointerup', executeShot);
     powerZone.addEventListener('pointerleave', () => { if(isCharging) executeShot(); });
 
@@ -457,44 +456,30 @@
         isCharging = false;
         document.getElementById('power-fill').style.height = '0%';
         
-        if (powerLevel < 0.1) { powerLevel = 0; return; } // Ignorar toques accidentales
+        // Evitar toques accidentales minúsculos
+        if (powerLevel < 0.05) { powerLevel = 0; return; } 
 
-        if(mode === 'RUN') {
-            if(ball.position.y <= 0.9) {
-                // El brinco depende del PowerGauge. Mínimo 15, Máximo 25.
-                velocity.y = 20 + (powerLevel * 7); 
-            }
+        if(activeMode === 'RUN') {
+            // El poder del slider afecta la altura del brinco (Jump Curve dinámico)
+            if(ball.position.y <= 0.9) velocity.y = 15 + (powerLevel * 12); 
         } else {
             isMoving = true;
-            let currentForce = powerLevel * (mode === 'BASKET' ? maxBasketForce : maxSoccerForce);
+            let currentForce = powerLevel * (activeMode === 'BASKET' ? maxBasketForce : maxSoccerForce);
             
-            velocity.x = Math.sin(aimAngle) * currentForce;
-            velocity.z = -Math.cos(aimAngle) * currentForce;
+            velocity.x = 0; 
+            velocity.z = -currentForce; 
             
-            if(mode === 'BASKET') {
-                velocity.y = currentForce * 1.6; // Parábola alta
-                velocity.z *= 0.8; // Suavizar profundidad para arco perfecto
-                
-                // RESPAWN DINÁMICO RÁPIDO (1 segundo de letargo máximo)
-                setTimeout(() => {
-                    if(mode === 'BASKET' && isMoving) {
-                        if(!hasScoredThisShot) updateScore(0, true);
-                        resetPlay();
-                    }
-                }, 2000); // 1.5s da tiempo justo de ver si entra o rebota
-                
-            } else if(mode === 'SOCCER') {
-                velocity.y = currentForce * 1; // Misil rasante (menos Y)
-                velocity.z *= 2; // Más empuje al fondo
-                
-                setTimeout(() => { if(mode === 'SOCCER' && isMoving) { if(!hasScoredThisShot) updateScore(0, true); resetPlay(); } }, 3000);
+            if(activeMode === 'BASKET') {
+                velocity.y = currentForce * 1.6; 
+                velocity.z *= 0.8; 
+            } else if(activeMode === 'SOCCER') {
+                velocity.y = currentForce * 1; 
+                velocity.z *= 2; 
             }
         }
         powerLevel = 0;
     }
 
-
-    // --- RENDER LOOP Y FÍSICAS ---
     const ballSphere = new THREE.Sphere();
     let hasScoredThisShot = false;
 
@@ -504,8 +489,7 @@
         if(dt > 0.1) dt = 0.1; 
         let time = clock.getElapsedTime();
 
-        if(mode === 'BASKET') {
-            // El tablero se mueve de lado a lado
+        if(activeMode === 'BASKET' && gameActive) {
             let speed = 1.5 + (streak * 0.2);
             let amplitude = Math.min(2 + (streak * 0.5), 6); 
             hoop.position.x = Math.sin(time * speed) * amplitude;
@@ -513,83 +497,61 @@
             boardBox.setFromObject(board); 
         }
 
-        if (isMoving) {
-            // Arrastre aerodinámico
-            if(mode !== 'RUN') {
-                velocity.z *= 0.99; velocity.x *= 0.99;
-            }
-
+        if (isMoving && gameActive) {
+            if(activeMode !== 'RUN') { velocity.z *= 0.99; velocity.x *= 0.99; } 
             velocity.y += gravity * dt;
             ball.position.addScaledVector(velocity, dt);
-            
-            // Rotación visual
             ball.rotation.x += velocity.z * dt * 0.5;
-            ball.rotation.z -= velocity.x * dt * 0.5;
-
             ballSphere.set(ball.position, 0.8);
 
-            // COLISIONES BASKET
-            if (mode === 'BASKET') {
+            if (activeMode === 'BASKET') {
                 if (boardBox.intersectsSphere(ballSphere)) {
                     let depth = ballSphere.radius - Math.abs(boardBox.max.z - ballSphere.center.z);
                     if(depth > 0 && velocity.z < 0) ball.position.z += depth + 0.1;
-                    velocity.z *= -0.5; velocity.y *= 0.8; velocity.x *= 0.8; // Rebote snappy
+                    velocity.z *= -0.5; velocity.y *= 0.8; velocity.x *= 0.8; 
                 }
-                
-                // Validación "Swish" persiguiendo aro móvil
                 if(!hasScoredThisShot && velocity.y < 0 && ball.position.y < 7 && ball.position.y > 6) {
                     if (Math.abs(ball.position.x - hoop.position.x) < 1.5 && Math.abs(ball.position.z - hoop.position.z) < 1.5) {
-                        hasScoredThisShot = true;
-                        updateScore(2, false);
+                        hasScoredThisShot = true; updateScore(2, false);
                     }
                 }
             }
 
-            // COLISIONES SOCCER
-            if (mode === 'SOCCER') {
-                goalBox.setFromObject(goal); // Actualizar hitbox
+            if (activeMode === 'SOCCER') {
+                goalBox.setFromObject(goal); 
                 if (goalBox.intersectsSphere(ballSphere)) {
                     if (velocity.z < 0 && ball.position.z < goalBox.max.z) {
                         ball.position.z = goalBox.max.z + 0.8; 
                         velocity.z *= -0.2; velocity.x *= 0.5; velocity.y *= 0.5;
-                        if(!hasScoredThisShot) {
-                            hasScoredThisShot = true;
-                            updateScore(3, false);
-                        }
+                        if(!hasScoredThisShot) { hasScoredThisShot = true; updateScore(3, false); }
                     }
                 }
             }
 
-            // REBOTE PISO
+            if (ball.position.z < -120) {
+                if(!hasScoredThisShot) updateScore(0, true);
+                resetBall();
+            }
+
             if (ball.position.y < 0.8) {
                 ball.position.y = 0.8; 
-                
-                if (mode !== 'RUN') {
+                if (activeMode !== 'RUN') {
                     velocity.y *= -0.5; velocity.z *= 0.7; velocity.x *= 0.7;
                     if (Math.abs(velocity.y) < 1 && Math.abs(velocity.z) < 1) {
                         if(!hasScoredThisShot) updateScore(0, true); 
-                        resetPlay();
+                        resetBall();
                     }
-                } else {
-                    velocity.y = 0; 
-                }
+                } else { velocity.y = 0; }
             }
 
-            // LÓGICA VALLAS
-            if (mode === 'RUN') {
+            if (activeMode === 'RUN') {
                 runSpeedMultiplier += dt * 0.05; 
-                if(runSpeedMultiplier > 3.0) runSpeedMultiplier = 3.0; // Cap para que el salto siempre sea posible
-                
+                if(runSpeedMultiplier > 3.0) runSpeedMultiplier = 3.0; 
                 hurdle.position.z += (20 * runSpeedMultiplier) * dt; 
-                hurdle.updateMatrixWorld(true);
-                hurdleBox.setFromObject(hurdleVol);
+                hurdle.updateMatrixWorld(true); hurdleBox.setFromObject(hurdleVol);
                 
-                if (hurdle.position.z > 5) {
-                    hurdle.position.z = -40; 
-                    updateScore(1, false);
-                }
-
-                if (hurdleBox.intersectsSphere(ballSphere)) {
+                if (hurdle.position.z > 5) { hurdle.position.z = -40; updateScore(1, false); }
+                if (hurdleBox.intersectsSphere(ballSphere)) { 
                     updateScore(0, true); 
                     runSpeedMultiplier = 1; 
                     hurdle.position.z = -40; 
@@ -598,7 +560,7 @@
             }
         }
 
-        if(mode === 'RUN' && isMoving) {
+        if(activeMode === 'RUN' && isMoving && gameActive) {
             grid.position.z += (20 * runSpeedMultiplier) * dt;
             if(grid.position.z > 10) grid.position.z -= 10;
         }
