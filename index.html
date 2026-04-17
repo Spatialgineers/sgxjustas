@@ -5,85 +5,113 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SGX Justas Challenge</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
+
         :root {
-            --primary: #008f39; /* Verde Mayagüez */
-            --dark: #121212;
-            --card: #1e1e1e;
-            --text: #f4f4f4;
-            --accent: #FDCC0D; /* SGX Yellow */
+            --primary: #00ffcc; /* Cyber Cyan */
+            --dark: #050505;
+            --accent: #ff0055; /* Neon Pink */
+            --glass: rgba(10, 10, 15, 0.7);
         }
         
-        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; touch-action: none; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; touch-action: none; font-family: 'Orbitron', sans-serif; }
         
-        /* CONTENEDOR EMULADOR (Consistencia con el Hub) */
-        body { background-color: #050505; color: var(--text); overflow: hidden; display: flex; justify-content: center; }
+        body { background-color: #000; color: #fff; overflow: hidden; display: flex; justify-content: center; }
         
         #app-container {
-            width: 100%;
-            max-width: 480px; 
-            background-color: var(--dark);
-            height: 100vh;
-            position: relative;
-            box-shadow: 0 0 30px rgba(0,0,0,0.8);
-            overflow: hidden;
+            width: 100%; max-width: 480px; height: 100vh; position: relative;
+            background: radial-gradient(circle at center, #111 0%, #000 100%);
+            box-shadow: 0 0 40px rgba(0, 255, 204, 0.2); overflow: hidden;
         }
 
-        /* OVERLAY DE SELECCIÓN DE UNIVERSIDAD */
-        #uni-selector {
+        /* OVERLAY DE SELECCIÓN */
+        #uni-selector, #end-screen {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(18, 18, 18, 0.95); z-index: 1000;
+            background: var(--glass); z-index: 1000;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            backdrop-filter: blur(15px); padding: 20px;
+            backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); padding: 20px;
         }
-        #uni-selector h1 { font-size: 32px; text-transform: uppercase; color: var(--accent); margin-bottom: 10px; text-align: center; font-weight: 900; letter-spacing: 2px;}
-        #uni-selector p { color: #aaa; margin-bottom: 40px; font-size: 14px; text-align: center; line-height: 1.5; }
         
-        .uni-btn {
-            width: 100%; max-width: 320px; padding: 18px; margin-bottom: 15px;
-            background: var(--card); border: 2px solid; border-radius: 12px;
-            font-size: 16px; font-weight: 800; color: white; cursor: pointer;
-            text-transform: uppercase; letter-spacing: 1px; transition: 0.2s;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        h1 { font-size: 32px; text-transform: uppercase; color: var(--primary); margin-bottom: 10px; text-align: center; text-shadow: 0 0 15px var(--primary), 0 0 5px #fff; letter-spacing: 2px;}
+        p { color: #aaa; margin-bottom: 40px; font-size: 12px; text-align: center; letter-spacing: 1px; }
+        
+        .cyber-btn {
+            width: 100%; max-width: 320px; padding: 15px; margin-bottom: 15px;
+            background: rgba(0,0,0,0.5); border: 1px solid var(--primary); border-radius: 4px;
+            font-size: 16px; font-weight: 700; color: #fff; cursor: pointer;
+            text-transform: uppercase; letter-spacing: 2px; transition: 0.2s;
+            box-shadow: inset 0 0 10px rgba(0,255,204,0.1), 0 0 10px rgba(0,255,204,0.2);
         }
-        .uni-uprm { border-color: #008f39; } .uni-uprm:active { background: #008f39; transform: scale(0.98); }
-        .uni-inter { border-color: #FDCC0D; color: #FDCC0D;} .uni-inter:active { background: #FDCC0D; color: black; transform: scale(0.98);}
-        .uni-iupi { border-color: #cc0000; } .uni-iupi:active { background: #cc0000; transform: scale(0.98);}
-        .uni-sagrado { border-color: #ff007f; } .uni-sagrado:active { background: #ff007f; transform: scale(0.98);}
+        .cyber-btn:active { background: var(--primary); color: #000; transform: scale(0.98); }
+        .btn-uprm { border-color: #008f39; box-shadow: 0 0 10px rgba(0,143,57,0.4); }
+        .btn-inter { border-color: #FDCC0D; box-shadow: 0 0 10px rgba(253,204,13,0.4); }
 
         /* UI DEL JUEGO */
-        #game-ui { display: none; width: 100%; height: 100%; position: absolute; top: 0; left: 0; pointer-events: none; }
+        #game-ui { display: none; width: 100%; height: 100%; position: absolute; top: 0; left: 0; pointer-events: none; z-index: 10; }
         
-        #nav-modes { 
-            position: absolute; top: 20px; left: 50%; transform: translateX(-50%); 
-            z-index: 10; display: flex; gap: 8px; background: rgba(0,0,0,0.7); 
-            padding: 8px; border-radius: 30px; border: 1px solid #333; pointer-events: auto;
-            backdrop-filter: blur(5px);
+        /* HEADER (Timer & Score) */
+        #header-hud {
+            position: absolute; top: 20px; width: 100%; padding: 0 20px;
+            display: flex; justify-content: space-between; align-items: flex-start;
         }
         
-        .mode-btn { 
-            background: transparent; color: #888; border: none; 
-            border-radius: 20px; padding: 10px 18px; font-size: 13px; 
-            cursor: pointer; font-weight: 800; text-transform: uppercase; transition: 0.3s;
+        .hud-box {
+            background: rgba(0,0,0,0.6); border: 1px solid var(--primary);
+            padding: 10px 15px; border-radius: 8px; backdrop-filter: blur(5px);
+            box-shadow: 0 0 10px rgba(0,255,204,0.2); text-align: center;
         }
-        .mode-btn.active { background: var(--accent); color: #000; box-shadow: 0 0 15px rgba(253, 204, 13, 0.4); }
+        
+        #timer-val { font-size: 28px; font-weight: 900; color: var(--accent); text-shadow: 0 0 10px var(--accent); }
+        #score-val { font-size: 28px; font-weight: 900; color: var(--primary); text-shadow: 0 0 10px var(--primary); }
+        .hud-label { font-size: 10px; color: #888; text-transform: uppercase; letter-spacing: 1px; }
 
-        #score-board { position: absolute; top: 90px; width: 100%; text-align: center; }
-        #score-val { font-size: 50px; font-weight: 900; color: white; text-shadow: 0 4px 15px rgba(0,0,0,0.8); line-height: 1; }
-        #streak-val { font-size: 18px; color: var(--accent); font-weight: 900; text-transform: uppercase; letter-spacing: 3px; margin-top: 5px; text-shadow: 0 2px 5px rgba(0,0,0,0.8); }
+        #streak-val { position: absolute; top: 80px; width: 100%; text-align: center; font-size: 16px; color: var(--primary); font-weight: 900; letter-spacing: 3px; text-shadow: 0 0 10px var(--primary); }
 
         #hype-text { 
-            position: absolute; top: 40%; width: 100%; text-align: center; 
-            font-size: 50px; font-weight: 900; color: #fff; text-transform: uppercase;
-            opacity: 0; transform: scale(0.5); transition: 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            text-shadow: 0px 5px 0px #000, 0 0 30px var(--primary); z-index: 50;
+            position: absolute; top: 30%; width: 100%; text-align: center; 
+            font-size: 40px; font-weight: 900; color: #fff; text-transform: uppercase;
+            opacity: 0; transform: scale(0.5); transition: 0.2s;
+            text-shadow: 0 0 20px var(--primary);
         }
 
-        #hud { position: absolute; bottom: 50px; width: 100%; text-align: center; font-size: 15px; font-weight: 800; letter-spacing: 1px; color: #aaa; text-transform: uppercase; background: linear-gradient(to right, transparent, rgba(0,0,0,0.5), transparent); padding: 10px 0; }
-        
-        #brand-tag { position: absolute; bottom: 15px; width: 100%; text-align: center; font-size: 11px; color: #555; font-weight: bold; letter-spacing: 1px; }
+        /* GAUGE DE POTENCIA (Mecánica de Billar) */
+        #power-zone {
+            position: absolute; right: 15px; top: 25%; height: 50%; width: 40px;
+            pointer-events: auto; /* Zona interactiva */
+        }
+        #power-bg {
+            width: 100%; height: 100%; background: rgba(0,0,0,0.8);
+            border: 2px solid #333; border-radius: 20px; overflow: hidden;
+            position: relative; box-shadow: 0 0 15px rgba(0,0,0,0.5);
+        }
+        #power-fill {
+            position: absolute; bottom: 0; left: 0; width: 100%; height: 0%;
+            background: linear-gradient(to top, var(--primary), var(--accent));
+            box-shadow: 0 0 15px var(--accent); transition: height 0.05s;
+        }
+        .gauge-label { position: absolute; bottom: -25px; left: -10px; width: 60px; text-align: center; font-size: 10px; color: #aaa; }
 
-        /* Contenedor del Canvas para mantener proporciones en Desktop */
-        #canvas-container { width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: -1; }
+        /* CONTROLES DE MODO */
+        #nav-modes { 
+            position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); 
+            display: flex; gap: 10px; pointer-events: auto;
+        }
+        .mode-btn { 
+            background: rgba(0,0,0,0.8); color: #666; border: 1px solid #333; 
+            border-radius: 4px; padding: 12px; font-size: 12px; 
+            cursor: pointer; font-weight: 700; text-transform: uppercase; transition: 0.3s;
+        }
+        .mode-btn.active { border-color: var(--primary); color: var(--primary); box-shadow: 0 0 15px rgba(0,255,204,0.3); }
+
+        #aim-zone { position: absolute; left: 0; top: 0; width: 75%; height: 100%; pointer-events: auto; }
+
+        #canvas-container { width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 0; pointer-events: none;}
+
+        /* SCOREBOARD (END SCREEN) */
+        #end-screen { display: none; }
+        .stat-row { display: flex; justify-content: space-between; width: 100%; max-width: 250px; margin-bottom: 15px; border-bottom: 1px solid #333; padding-bottom: 5px;}
+        .stat-label { color: #888; font-size: 14px; }
+        .stat-number { color: var(--primary); font-size: 18px; font-weight: bold; text-shadow: 0 0 5px var(--primary); }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
@@ -91,295 +119,382 @@
 
 <div id="app-container">
     <div id="uni-selector">
-        <h1>Elige tu Sangre</h1>
-        <p>¿A quién representas en el ecosistema de las Justas 2026?</p>
-        <button class="uni-btn uni-uprm" onclick="startGame('Colegio')">Colegio (UPRM)</button>
-        <button class="uni-btn uni-inter" onclick="startGame('Tigres')">Interamericana</button>
-        <button class="uni-btn uni-iupi" onclick="startGame('Gallitos')">La Iupi (UPRRP)</button>
-        <button class="uni-btn uni-sagrado" onclick="startGame('Delfines')">Sagrado</button>
+        <h1>SGX Justas</h1>
+        <p>Selecciona tu tribu para cargar texturas</p>
+        <button class="cyber-btn btn-uprm" onclick="startGame('UPRM')">Colegio (UPRM)</button>
+        <button class="cyber-btn btn-inter" onclick="startGame('Inter')">Interamericana</button>
+        <button class="cyber-btn" onclick="startGame('Default')">Modo Arcade (Default)</button>
     </div>
 
     <div id="game-ui">
+        <div id="aim-zone"></div>
+        <div id="power-zone">
+            <div id="power-bg"><div id="power-fill"></div></div>
+            <div class="gauge-label">POWER</div>
+        </div>
+
+        <div id="header-hud">
+            <div class="hud-box">
+                <div class="hud-label">TIEMPO</div>
+                <div id="timer-val">60</div>
+            </div>
+            <div class="hud-box">
+                <div class="hud-label">PUNTOS</div>
+                <div id="score-val">0</div>
+            </div>
+        </div>
+        
+        <div id="streak-val"></div>
+        <div id="hype-text">¡LÍQUIDO!</div>
+
         <div id="nav-modes">
             <button id="btn-run" class="mode-btn" onclick="setMode('RUN')">Vallas</button>
             <button id="btn-basket" class="mode-btn" onclick="setMode('BASKET')">Basket</button>
             <button id="btn-soccer" class="mode-btn" onclick="setMode('SOCCER')">Fútbol</button>
         </div>
-        
-        <div id="score-board">
-            <div id="score-val">0</div>
-            <div id="streak-val">Racha x1</div>
-        </div>
-
-        <div id="hype-text">¡SWISH!</div>
-        <div id="hud">Haz swipe para interactuar</div>
-        <div id="brand-tag">POWERED BY SPATIALGINEERS</div>
     </div>
     
+    <div id="end-screen">
+        <h1>TIEMPO FUERA</h1>
+        <div class="stat-row"><span class="stat-label">Puntos Totales:</span><span class="stat-number" id="final-score">0</span></div>
+        <div class="stat-row"><span class="stat-label">Racha Máxima:</span><span class="stat-number" id="final-streak">0</span></div>
+        <div class="stat-row" style="margin-bottom: 40px;"><span class="stat-label">Universidad:</span><span class="stat-number" id="final-team">UPRM</span></div>
+        
+        <button class="cyber-btn" onclick="shareScore()">Compartir en IG</button>
+        <button class="cyber-btn" style="background: transparent; border-color: #555;" onclick="location.reload()">Jugar de Nuevo</button>
+    </div>
+
     <div id="canvas-container"></div>
 </div>
 
 <script>
+    // --- VARIABLES DE ESTADO Y ARQUITECTURA ---
     let playerTeam = "";
-    let teamColor = 0x008f39; // Verde SGX Default
+    let teamColor = 0x00ffcc; 
+    let mode = 'NONE';
+    
+    // Core Game Loop variables
+    let score = 0;
+    let streak = 1;
+    let maxStreak = 1;
+    let timeLeft = 60;
+    let gameActive = false;
+    let timerInterval;
+
+    // Físicas y Control
+    let isMoving = false;
+    let velocity = new THREE.Vector3();
+    let spin = 0;
+    const gravity = -60; // Gravedad pesada para que la bola caiga rápido y no sea letárgico
+    let runSpeedMultiplier = 1;
+    let clock = new THREE.Clock();
+
+    // Vectores de Puntería (Billiards Mechanic)
+    let aimAngle = 0; // 0 = hacia adelante (-Z)
+    let powerLevel = 0; // 0.0 a 1.0
+    let isAiming = false;
+    let isCharging = false;
+    const maxBasketForce = 35;
+    const maxSoccerForce = 45;
+
+    const startPos = new THREE.Vector3(0, 0.8, 0);
+
+    // --- CARGA DE TEXTURAS (CORS ENABLED) ---
+    const texLoader = new THREE.TextureLoader();
+    texLoader.setCrossOrigin("anonymous");
+    const texUPRM = texLoader.load("https://static.wixstatic.com/media/fe81a7_308d85a6e32b435abefe455e032bd56a~mv2.jpg");
+    const texInter = texLoader.load("https://static.wixstatic.com/media/fe81a7_731bfd3f7d1a49f19b4dfb981b8ec8be~mv2.jpg");
 
     function startGame(team) {
         playerTeam = team;
         document.getElementById('uni-selector').style.display = 'none';
         document.getElementById('game-ui').style.display = 'block';
         
-        // Mapeo tribal de colores
-        if(team === 'Colegio') teamColor = 0x008f39;
-        if(team === 'Tigres') teamColor = 0xFDCC0D;
-        if(team === 'Gallitos') teamColor = 0xcc0000;
-        if(team === 'Delfines') teamColor = 0xff007f;
+        if(team === 'UPRM') { teamColor = 0x008f39; ballMat.map = texUPRM; ballMat.color.setHex(0xffffff); }
+        else if(team === 'Inter') { teamColor = 0xFDCC0D; ballMat.map = texInter; ballMat.color.setHex(0xffffff); }
+        else { teamColor = 0x00ffcc; ballMat.color.setHex(teamColor); }
         
-        // Inyectar el color de la tribu en el motor gráfico y la UI
+        document.documentElement.style.setProperty('--primary', '#' + teamColor.toString(16).padStart(6, '0'));
         grid.material.color.setHex(teamColor);
         ballLight.color.setHex(teamColor);
-        document.getElementById('streak-val').style.color = '#' + teamColor.toString(16).padStart(6, '0');
+        arrowHelper.setColor(teamColor);
         
         setMode('BASKET'); 
+        startGameLoop();
     }
 
-    // 1. ARQUITECTURA ESTÉTICA (Cyber / Night Mode Integrado)
+    function startGameLoop() {
+        score = 0; streak = 1; maxStreak = 1; timeLeft = 60;
+        gameActive = true;
+        updateScore(0, false);
+        document.getElementById('timer-val').innerText = timeLeft;
+        
+        timerInterval = setInterval(() => {
+            timeLeft--;
+            document.getElementById('timer-val').innerText = timeLeft;
+            if(timeLeft <= 10) document.getElementById('timer-val').style.color = '#ff0055';
+            
+            if(timeLeft <= 0) {
+                endGame();
+            }
+        }, 1000);
+    }
+
+    function endGame() {
+        gameActive = false;
+        clearInterval(timerInterval);
+        document.getElementById('game-ui').style.display = 'none';
+        document.getElementById('end-screen').style.display = 'flex';
+        
+        document.getElementById('final-score').innerText = score;
+        document.getElementById('final-streak').innerText = "x" + maxStreak;
+        document.getElementById('final-team').innerText = playerTeam;
+    }
+
+    // --- INTEGRACIÓN SOCIAL (Virality) ---
+    function shareScore() {
+        const shareText = `¡Acabo de anotar ${score} puntos con racha x${maxStreak} representando a ${playerTeam} en el SGX Justas Challenge! 🏀🔥 ¿Puedes superarlo?`;
+        if (navigator.share) {
+            navigator.share({ title: 'SGX Justas', text: shareText, url: window.location.href })
+            .catch(console.error);
+        } else {
+            alert("Copia esto para tu Story: \n\n" + shareText);
+        }
+    }
+
+    // --- SETUP MOTOR 3D (CYBER-TRON) ---
     const container = document.getElementById('canvas-container');
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x0a0a0a);
-    scene.fog = new THREE.FogExp2(0x0a0a0a, 0.025); 
+    scene.background = new THREE.Color(0x050505);
+    scene.fog = new THREE.FogExp2(0x050505, 0.025); 
     
-    // Cámara ajustada al contenedor emulador, no a la ventana global
     const camera = new THREE.PerspectiveCamera(55, container.clientWidth / container.clientHeight, 0.1, 1000);
-    const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
     renderer.setSize(container.clientWidth, container.clientHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     container.appendChild(renderer.domElement);
 
-    // Ajuste responsivo para cuando el usuario rota el celular
-    window.addEventListener('resize', () => {
-        camera.aspect = container.clientWidth / container.clientHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(container.clientWidth, container.clientHeight);
-    });
-
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
     scene.add(ambientLight);
 
-    const mainLight = new THREE.DirectionalLight(0xffffff, 1.2);
-    mainLight.position.set(0, 20, 10);
-    scene.add(mainLight);
-
-    const grid = new THREE.GridHelper(200, 100, 0x008f39, 0x111111);
+    const grid = new THREE.GridHelper(200, 100, 0x00ffcc, 0x111111);
     grid.position.y = 0;
     scene.add(grid);
 
-    // 2. ACTIVOS Y HITBOXES SÓLIDOS
-    const ballRadius = 0.8;
-    const ballMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.2, metalness: 0.8 });
-    const ball = new THREE.Mesh(new THREE.SphereGeometry(ballRadius, 32, 32), ballMat);
+    // --- ACTIVOS DEL JUEGO ---
+    const ballMat = new THREE.MeshStandardMaterial({ roughness: 0.3, metalness: 0.2 });
+    const ball = new THREE.Mesh(new THREE.SphereGeometry(0.8, 32, 32), ballMat);
     scene.add(ball);
 
-    const ballWire = new THREE.Mesh(new THREE.SphereGeometry(ballRadius + 0.05, 16, 16), new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: true, transparent: true, opacity: 0.4 }));
+    const ballWire = new THREE.Mesh(new THREE.SphereGeometry(0.85, 16, 16), new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: true, transparent: true, opacity: 0.2 }));
     ball.add(ballWire);
-
-    const ballLight = new THREE.PointLight(0x008f39, 2, 15);
+    const ballLight = new THREE.PointLight(0x00ffcc, 1.5, 15);
     ball.add(ballLight);
 
-    // Canasto (Basket)
+    // Flecha de Puntería Holográfica (Aim Vector)
+    const arrowHelper = new THREE.ArrowHelper(new THREE.Vector3(0,0,-1), new THREE.Vector3(0,0,0), 4, 0x00ffcc, 1, 0.5);
+    scene.add(arrowHelper);
+
+    // Canasto Basket
     const hoop = new THREE.Group();
-    const ring = new THREE.Mesh(new THREE.TorusGeometry(1.2, 0.1, 16, 32), new THREE.MeshBasicMaterial({ color: 0xff4400 })); 
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(1.2, 0.1, 16, 32), new THREE.MeshBasicMaterial({ color: 0xff0055 })); 
     ring.rotation.x = Math.PI / 2;
     hoop.add(ring);
-    
-    const board = new THREE.Mesh(new THREE.BoxGeometry(4, 3, 0.2), new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.5, metalness: 0.8, transparent: true, opacity: 0.9 }));
+    const board = new THREE.Mesh(new THREE.BoxGeometry(4.5, 3.5, 0.5), new THREE.MeshStandardMaterial({ color: 0x111, transparent: true, opacity: 0.9 }));
     board.position.set(0, 1.5, -1.3);
-    
-    const boardEdge = new THREE.EdgesGeometry(new THREE.BoxGeometry(4, 3, 0.2));
-    const boardLine = new THREE.LineSegments(boardEdge, new THREE.LineBasicMaterial({ color: 0xffffff, linewidth: 2 }));
+    const boardLine = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(4.5, 3.5, 0.5)), new THREE.LineBasicMaterial({ color: 0xffffff }));
     boardLine.position.set(0, 1.5, -1.3);
     hoop.add(board, boardLine);
     scene.add(hoop);
     const boardBox = new THREE.Box3();
 
-    // Portería (Soccer)
+    // Portería Soccer
     const goal = new THREE.Group();
     const postMat = new THREE.MeshBasicMaterial({ color: 0xffffff }); 
-    const postGeo = new THREE.CylinderGeometry(0.15, 0.15, 4);
-    const leftPost = new THREE.Mesh(postGeo, postMat); leftPost.position.set(-4, 2, 0);
-    const rightPost = new THREE.Mesh(postGeo, postMat); rightPost.position.set(4, 2, 0);
+    const leftPost = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 4), postMat); leftPost.position.set(-4, 2, 0);
+    const rightPost = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 4), postMat); rightPost.position.set(4, 2, 0);
     const topBar = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 8.3), postMat); topBar.rotation.z = Math.PI / 2; topBar.position.set(0, 4, 0);
-    
-    const netArea = new THREE.Mesh(new THREE.BoxGeometry(8, 4, 2), new THREE.MeshBasicMaterial({ visible: false }));
-    netArea.position.set(0, 2, -1);
-    goal.add(leftPost, rightPost, topBar, netArea);
+    goal.add(leftPost, rightPost, topBar);
     scene.add(goal);
     const goalBox = new THREE.Box3();
 
-    // Valla (Run) - Hitbox Matemático Refactorizado
+    // Vallas (Run)
     const hurdle = new THREE.Group();
     const hBar = new THREE.Mesh(new THREE.BoxGeometry(6, 0.3, 0.3), new THREE.MeshBasicMaterial({ color: 0xff0055 }));
     hBar.position.y = 1.5;
-    const hLegL = new THREE.Mesh(new THREE.BoxGeometry(0.3, 1.5, 0.3), new THREE.MeshStandardMaterial({color: 0x333333}));
-    hLegL.position.set(-2.85, 0.75, 0);
+    const hLegL = new THREE.Mesh(new THREE.BoxGeometry(0.3, 1.5, 0.3), new THREE.MeshStandardMaterial({color: 0x333})); hLegL.position.set(-2.85, 0.75, 0);
     const hLegR = hLegL.clone(); hLegR.position.set(2.85, 0.75, 0);
-    
-    // Caja de colisión invisible anclada a la valla para evitar "tunneling"
-    const hurdleCollisionVolume = new THREE.Mesh(new THREE.BoxGeometry(6.5, 2.0, 1.0), new THREE.MeshBasicMaterial({visible: false}));
-    hurdleCollisionVolume.position.y = 1.0;
-    
-    hurdle.add(hBar, hLegL, hLegR, hurdleCollisionVolume);
+    const hurdleVol = new THREE.Mesh(new THREE.BoxGeometry(6.5, 2.0, 1.0), new THREE.MeshBasicMaterial({visible: false})); hurdleVol.position.y = 1.0;
+    hurdle.add(hBar, hLegL, hLegR, hurdleVol);
     scene.add(hurdle);
-    const hurdleBox = new THREE.Box3(); // Instancia de hitbox puro
+    const hurdleBox = new THREE.Box3(); 
 
-    // 3. MOTOR DE FÍSICAS Y SISTEMA HYPE
-    let mode = 'NONE';
-    let isMoving = false;
-    let velocity = new THREE.Vector3();
-    let spin = 0;
-    const gravity = -35; 
-    let score = 0;
-    let streak = 1;
-    let runSpeedMultiplier = 1;
-    let clock = new THREE.Clock();
-
-    const startPos = new THREE.Vector3(0, ballRadius, 0);
-
+    // --- INTERFAZ LÓGICA (HUD & HYPE) ---
     const hypeEl = document.getElementById('hype-text');
     function showHype(type) {
         let msg = "";
-        if(type === 'score_basket') msg = ["¡SWISH!", "¡LÍQUIDO!", "¡FUEGO!", "¡" + playerTeam.toUpperCase() + "!" ][Math.floor(Math.random()*4)];
-        if(type === 'score_soccer') msg = ["¡GOLAZO!", "¡AL ÁNGULO!", "¡CLAVADO!"][Math.floor(Math.random()*3)];
-        if(type === 'miss') { msg = ["BRICK", "AIRE", "MALA MÍA", "FALTÓ CALLE"][Math.floor(Math.random()*4)]; hypeEl.style.color = "#ff0000"; } 
+        if(type === 'score_basket') msg = ["¡SWISH!", "¡LÍQUIDO!", "¡CLUTCH!"][Math.floor(Math.random()*3)];
+        if(type === 'score_soccer') msg = ["¡GOLAZO!", "¡AL ÁNGULO!", "¡MISIL!"][Math.floor(Math.random()*3)];
+        if(type === 'miss') { msg = ["BRICK", "AIRE", "MALA MÍA"]; hypeEl.style.color = "#ff0055"; } 
         else { hypeEl.style.color = "#fff"; }
         
         hypeEl.innerText = msg;
         hypeEl.style.opacity = 1;
         hypeEl.style.transform = "scale(1)";
-        
-        setTimeout(() => {
-            hypeEl.style.opacity = 0;
-            hypeEl.style.transform = "scale(0.5)";
-        }, 1000);
+        setTimeout(() => { hypeEl.style.opacity = 0; hypeEl.style.transform = "scale(0.5)"; }, 800);
     }
 
     function updateScore(points, isMiss = false) {
+        if(!gameActive) return;
+        
         if(isMiss) {
             streak = 1;
-            if(mode !== 'RUN') showHype('miss'); // En vallas no queremos tapar la pantalla cada vez que chocas
+            if(mode !== 'RUN') showHype('miss'); 
         } else {
             score += (points * streak);
             streak++;
+            if(streak > maxStreak) maxStreak = streak;
             if(mode === 'BASKET') showHype('score_basket');
             if(mode === 'SOCCER') showHype('score_soccer');
         }
         
         document.getElementById('score-val').innerText = score;
-        document.getElementById('streak-val').innerText = streak > 1 ? `Racha x${streak}` : "";
-        
-        document.getElementById('score-val').style.transform = "scale(1.2)";
-        setTimeout(() => document.getElementById('score-val').style.transform = "scale(1)", 150);
+        document.getElementById('streak-val').innerText = streak > 1 ? `RACHA x${streak}` : "";
     }
 
     function setMode(newMode) {
         mode = newMode;
-        isMoving = false;
-        velocity.set(0,0,0);
-        spin = 0;
-        streak = 1;
-        score = 0;
-        runSpeedMultiplier = 1;
-        updateScore(0, false);
-        ball.position.copy(startPos);
-        ball.rotation.set(0,0,0);
+        resetPlay();
+        score = 0; streak = 1; updateScore(0, false); // Reset stats on mode change
 
         document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
         document.getElementById('btn-' + mode.toLowerCase()).classList.add('active');
 
         hoop.visible = false; goal.visible = false; hurdle.visible = false;
-        ballWire.material.color.setHex(teamColor);
+        arrowHelper.visible = false;
 
         if(mode === 'BASKET') {
-            camera.position.set(0, 4, 12); camera.lookAt(0, 6, -15);
+            camera.position.set(0, 5, 12); camera.lookAt(0, 6, -15);
             hoop.visible = true; hoop.position.set(0, 7, -20);
-            hoop.updateMatrixWorld(true); boardBox.setFromObject(board);
-            ballMat.color.setHex(0xd55e00);
-            document.getElementById('hud').innerText = "Swipe central. El tablero se mueve.";
+            arrowHelper.visible = true;
         } 
         else if(mode === 'SOCCER') {
             camera.position.set(0, 3, 12); camera.lookAt(0, 1, -20);
-            goal.visible = true; 
-            // Posición inicial del Soccer, se irá randomizando
-            goal.position.set(0, 0, -25); 
-            goal.updateMatrixWorld(true); goalBox.setFromObject(goal);
-            ballMat.color.setHex(0xffffff); ballWire.material.color.setHex(0x000000);
-            document.getElementById('hud').innerText = "Swipe curva. Cuidado con la distancia.";
+            goal.visible = true; goal.position.set(0, 0, -35); // Inicia más lejos como pediste
+            arrowHelper.visible = true;
         }
         else if(mode === 'RUN') {
             camera.position.set(0, 4, 8); camera.lookAt(0, 1, -10);
             hurdle.visible = true; hurdle.position.set(0, 0, -30);
-            ballMat.color.setHex(teamColor); ballWire.material.color.setHex(0xffffff);
-            document.getElementById('hud').innerText = "Swipe arriba para saltar las vallas";
             isMoving = true; 
         }
     }
 
-    // RESET PARA DIFICULTAD DINÁMICA (DDA)
     function resetPlay() {
         isMoving = false;
         ball.position.copy(startPos);
         ball.rotation.set(0,0,0);
         velocity.set(0,0,0);
-        spin = 0;
+        powerLevel = 0;
+        document.getElementById('power-fill').style.height = '0%';
         hasScoredThisShot = false;
+        
+        aimAngle = 0;
+        arrowHelper.position.copy(startPos);
+        arrowHelper.setDirection(new THREE.Vector3(0,0,-1));
 
-        // Dificultad Dinámica: Soccer Spawn Aleatorio + Profundidad
         if(mode === 'SOCCER') {
-            // El goalpost retrocede un máximo de -45 en Z, y varía entre -8 y 8 en X
-            let depthMultiplier = Math.min(streak * 2, 20); 
-            let lateralShift = (Math.random() - 0.5) * 16; // Randomizer agresivo lateral
-            
-            goal.position.set(lateralShift, 0, -25 - depthMultiplier);
-            goal.updateMatrixWorld(true); 
+            // El post de soccer va retrocediendo en Z basado en racha, pero sin moverse en X
+            let depthMultiplier = Math.min(streak * 2.5, 25); 
+            goal.position.set(0, 0, -35 - depthMultiplier);
             goalBox.setFromObject(goal);
         }
     }
 
-    // 4. MOTOR DE SWIPE CON DETECCIÓN TÁCTIL ABSOLUTA
-    let touchStart = { y: 0, x: 0, time: 0 };
-    const hitArea = document.getElementById('app-container');
+    // --- SISTEMA DE CONTROLES (AIM & POWER GAUGE) ---
+    const aimZone = document.getElementById('aim-zone');
+    const powerZone = document.getElementById('power-zone');
+    const powerFill = document.getElementById('power-fill');
 
-    hitArea.addEventListener('pointerdown', (e) => {
-        if(e.target.tagName === 'BUTTON') return;
-        touchStart.y = e.clientY; touchStart.x = e.clientX; touchStart.time = Date.now();
-    });
-
-    hitArea.addEventListener('pointerup', (e) => {
-        if(mode === 'NONE' || (isMoving && mode !== 'RUN')) return;
-
-        let deltaY = touchStart.y - e.clientY; 
-        let deltaX = e.clientX - touchStart.x; 
-        let timeLapse = (Date.now() - touchStart.time) / 1000; 
-
-        if (deltaY > 20 && timeLapse < 0.8) { 
-            let swipeSpeed = deltaY / timeLapse; 
-            if(swipeSpeed > 3200) swipeSpeed = 3200; // Cap físico protegido
-
-            if (mode === 'RUN') {
-                if(ball.position.y <= ballRadius + 0.1) velocity.y = 17; // Impulso de salto
-            } else {
-                isMoving = true;
-                let zForce = swipeSpeed * 0.016; 
-                let yForce = swipeSpeed * 0.013; 
-                let xForce = deltaX * 0.05; 
-                spin = deltaX * 0.05; 
-
-                if (mode === 'BASKET') velocity.set(xForce, yForce * 1.5, -zForce); 
-                else if (mode === 'SOCCER') velocity.set(xForce, yForce * 0.8, -zForce * 1.3); 
-            }
+    // 1. Apuntar (Arrastrar izquierda/derecha en pantalla)
+    let lastTouchX = 0;
+    aimZone.addEventListener('pointerdown', (e) => { if(!isMoving) { isAiming = true; lastTouchX = e.clientX; } });
+    aimZone.addEventListener('pointermove', (e) => {
+        if(isAiming && !isMoving) {
+            let deltaX = e.clientX - lastTouchX;
+            aimAngle -= deltaX * 0.01; // Rotar flecha
+            // Limitar ángulo visual para que no disparen hacia atrás
+            if(aimAngle > 1.2) aimAngle = 1.2;
+            if(aimAngle < -1.2) aimAngle = -1.2;
+            
+            let dir = new THREE.Vector3(Math.sin(aimAngle), 0, -Math.cos(aimAngle)).normalize();
+            arrowHelper.setDirection(dir);
+            // Rotar la bola visualmente para dar feedback
+            ball.rotation.y = aimAngle;
+            lastTouchX = e.clientX;
         }
     });
+    aimZone.addEventListener('pointerup', () => { isAiming = false; });
+    aimZone.addEventListener('pointerleave', () => { isAiming = false; });
 
-    // 5. RENDER LOOP Y FÍSICAS DE ALTA PRECISIÓN
+    // 2. Potencia (Arrastrar verticalmente en el Slider)
+    let powerStartY = 0;
+    powerZone.addEventListener('pointerdown', (e) => { if(!isMoving || mode==='RUN') { isCharging = true; powerStartY = e.clientY; } });
+    powerZone.addEventListener('pointermove', (e) => {
+        if(isCharging) {
+            let deltaY = e.clientY - powerStartY; // Hacia abajo es positivo
+            powerLevel = Math.max(0, Math.min(1, deltaY / 200)); // Normalizar de 0 a 1 basado en 200px de drag
+            powerFill.style.height = (powerLevel * 100) + '%';
+        }
+    });
+    
+    // 3. ¡Disparar!
+    powerZone.addEventListener('pointerup', executeShot);
+    powerZone.addEventListener('pointerleave', () => { if(isCharging) executeShot(); });
+
+    function executeShot() {
+        if(!isCharging || !gameActive) return;
+        isCharging = false;
+        document.getElementById('power-fill').style.height = '0%';
+        
+        if (powerLevel < 0.1) { powerLevel = 0; return; } // Ignorar toques accidentales
+
+        if(mode === 'RUN') {
+            if(ball.position.y <= 0.9) {
+                // El brinco depende del PowerGauge. Mínimo 15, Máximo 25.
+                velocity.y = 20 + (powerLevel * 7); 
+            }
+        } else {
+            isMoving = true;
+            let currentForce = powerLevel * (mode === 'BASKET' ? maxBasketForce : maxSoccerForce);
+            
+            velocity.x = Math.sin(aimAngle) * currentForce;
+            velocity.z = -Math.cos(aimAngle) * currentForce;
+            
+            if(mode === 'BASKET') {
+                velocity.y = currentForce * 1.6; // Parábola alta
+                velocity.z *= 0.8; // Suavizar profundidad para arco perfecto
+                
+                // RESPAWN DINÁMICO RÁPIDO (1 segundo de letargo máximo)
+                setTimeout(() => {
+                    if(mode === 'BASKET' && isMoving) {
+                        if(!hasScoredThisShot) updateScore(0, true);
+                        resetPlay();
+                    }
+                }, 2000); // 1.5s da tiempo justo de ver si entra o rebota
+                
+            } else if(mode === 'SOCCER') {
+                velocity.y = currentForce * 1; // Misil rasante (menos Y)
+                velocity.z *= 2; // Más empuje al fondo
+                
+                setTimeout(() => { if(mode === 'SOCCER' && isMoving) { if(!hasScoredThisShot) updateScore(0, true); resetPlay(); } }, 3000);
+            }
+        }
+        powerLevel = 0;
+    }
+
+
+    // --- RENDER LOOP Y FÍSICAS ---
     const ballSphere = new THREE.Sphere();
     let hasScoredThisShot = false;
 
@@ -389,54 +504,53 @@
         if(dt > 0.1) dt = 0.1; 
         let time = clock.getElapsedTime();
 
-        // DIFICULTAD DINÁMICA: Basket Oscilación Sinusoidal
         if(mode === 'BASKET') {
-            // Velocidad y amplitud atadas a la racha
+            // El tablero se mueve de lado a lado
             let speed = 1.5 + (streak * 0.2);
-            let amplitude = Math.min(2 + (streak * 0.8), 8); // Máximo movimiento lateral de 8 unidades
-            
+            let amplitude = Math.min(2 + (streak * 0.5), 6); 
             hoop.position.x = Math.sin(time * speed) * amplitude;
             hoop.updateMatrixWorld(true);
-            boardBox.setFromObject(board); // Actualizar hitbox de madera en tiempo real
+            boardBox.setFromObject(board); 
         }
 
         if (isMoving) {
+            // Arrastre aerodinámico
             if(mode !== 'RUN') {
                 velocity.z *= 0.99; velocity.x *= 0.99;
-                if(mode === 'SOCCER' && ball.position.y > ballRadius) velocity.x -= spin * dt * 3.0; // Magnus Curve Amplificado
             }
 
             velocity.y += gravity * dt;
             ball.position.addScaledVector(velocity, dt);
             
+            // Rotación visual
             ball.rotation.x += velocity.z * dt * 0.5;
             ball.rotation.z -= velocity.x * dt * 0.5;
-            ball.rotation.y += spin * dt;
 
-            ballSphere.set(ball.position, ballRadius);
+            ballSphere.set(ball.position, 0.8);
 
-            // A) BASKETBALL CORE
+            // COLISIONES BASKET
             if (mode === 'BASKET') {
                 if (boardBox.intersectsSphere(ballSphere)) {
-                    let intersectionDepth = ballSphere.radius - Math.abs(boardBox.max.z - ballSphere.center.z);
-                    if(intersectionDepth > 0 && velocity.z < 0) ball.position.z += intersectionDepth + 0.05;
-                    velocity.z *= -0.4; velocity.y *= 0.8; velocity.x *= 0.8;
+                    let depth = ballSphere.radius - Math.abs(boardBox.max.z - ballSphere.center.z);
+                    if(depth > 0 && velocity.z < 0) ball.position.z += depth + 0.1;
+                    velocity.z *= -0.5; velocity.y *= 0.8; velocity.x *= 0.8; // Rebote snappy
                 }
                 
-                // Validación matemática de "Swish" dinámica (persiguiendo el aro móvil)
+                // Validación "Swish" persiguiendo aro móvil
                 if(!hasScoredThisShot && velocity.y < 0 && ball.position.y < 7 && ball.position.y > 6) {
-                    if (Math.abs(ball.position.x - hoop.position.x) < 1.2 && Math.abs(ball.position.z - hoop.position.z) < 1.2) {
+                    if (Math.abs(ball.position.x - hoop.position.x) < 1.5 && Math.abs(ball.position.z - hoop.position.z) < 1.5) {
                         hasScoredThisShot = true;
                         updateScore(2, false);
                     }
                 }
             }
 
-            // B) SOCCER CORE
+            // COLISIONES SOCCER
             if (mode === 'SOCCER') {
+                goalBox.setFromObject(goal); // Actualizar hitbox
                 if (goalBox.intersectsSphere(ballSphere)) {
                     if (velocity.z < 0 && ball.position.z < goalBox.max.z) {
-                        ball.position.z = goalBox.max.z + ballRadius; 
+                        ball.position.z = goalBox.max.z + 0.8; 
                         velocity.z *= -0.2; velocity.x *= 0.5; velocity.y *= 0.5;
                         if(!hasScoredThisShot) {
                             hasScoredThisShot = true;
@@ -446,52 +560,44 @@
                 }
             }
 
-            // C) GRAVEDAD Y LÓGICA DE REBOTE
-            if (ball.position.y < ballRadius) {
-                ball.position.y = ballRadius; 
+            // REBOTE PISO
+            if (ball.position.y < 0.8) {
+                ball.position.y = 0.8; 
                 
                 if (mode !== 'RUN') {
-                    velocity.y *= -0.6; velocity.z *= 0.8; velocity.x *= 0.8; spin *= 0.5; 
-                    
+                    velocity.y *= -0.5; velocity.z *= 0.7; velocity.x *= 0.7;
                     if (Math.abs(velocity.y) < 1 && Math.abs(velocity.z) < 1) {
                         if(!hasScoredThisShot) updateScore(0, true); 
                         resetPlay();
                     }
                 } else {
-                    velocity.y = 0; spin *= 0.9;
+                    velocity.y = 0; 
                 }
             }
 
-            // D) VALLAS RUN - COLISIONES PERFECTAS CON BOX3
+            // LÓGICA VALLAS
             if (mode === 'RUN') {
-                runSpeedMultiplier += dt * 0.08; 
-                if(runSpeedMultiplier > 3.5) runSpeedMultiplier = 3.5; 
+                runSpeedMultiplier += dt * 0.05; 
+                if(runSpeedMultiplier > 3.0) runSpeedMultiplier = 3.0; // Cap para que el salto siempre sea posible
                 
                 hurdle.position.z += (20 * runSpeedMultiplier) * dt; 
-                
-                // Actualizar Box3 en cada frame para interceptar la bola
                 hurdle.updateMatrixWorld(true);
-                hurdleBox.setFromObject(hurdleCollisionVolume);
+                hurdleBox.setFromObject(hurdleVol);
                 
-                // Reset de Valla exitosa
                 if (hurdle.position.z > 5) {
                     hurdle.position.z = -40; 
                     updateScore(1, false);
                 }
 
-                // Hitbox Matemático de Destrucción
                 if (hurdleBox.intersectsSphere(ballSphere)) {
-                    updateScore(0, true); // Romper racha sin piedad
+                    updateScore(0, true); 
                     runSpeedMultiplier = 1; 
-                    hurdle.position.z = -40; // Alejar valla para evitar doble colisión
-                    velocity.y = 0; // Cancelar salto abruptamente para dar feedback visual
-                    document.getElementById('app-container').style.boxShadow = "inset 0 0 50px rgba(255,0,0,0.8)";
-                    setTimeout(() => document.getElementById('app-container').style.boxShadow = "0 0 30px rgba(0,0,0,0.8)", 200);
+                    hurdle.position.z = -40; 
+                    velocity.y = 0; 
                 }
             }
         }
 
-        // Ilusión óptica de velocidad en pista de Vallas
         if(mode === 'RUN' && isMoving) {
             grid.position.z += (20 * runSpeedMultiplier) * dt;
             if(grid.position.z > 10) grid.position.z -= 10;
